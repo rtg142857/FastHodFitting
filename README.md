@@ -6,4 +6,4 @@ The method of fitting HOD parameters is based on taking paircounts from the halo
 
 With this method the HOD parameter space can be explored very efficiently and HOD parameters which produce a target clustering can be found quickly
 
-Uses Corrfunc, emcee, and hdf5
+Uses Corrfunc, emcee, and hdf5. Implemented in python
