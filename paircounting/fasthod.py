@@ -1,6 +1,7 @@
 # fasthod.py
 """
-A module for all the functions used in my code to fit HOD parameters
+A module for all the functions used in my code to make mass binned
+paircounts from halo catalogs
 This should be imported at the start of any scripts
 """
 
@@ -194,9 +195,9 @@ def npairs_satsat_onehalo(x,y,z,Ms,num_sat_parts,mass_bin_edges,r_bin_edges):
         for j in range(i):
             print(k)
             Ms_reduced[:,k] = Ms[::num_sat_parts]
-            distances[:,k] = ((xs[i::num_sat_parts]-xs[j::num_sat_parts])**2 
-                            + (ys[i::num_sat_parts]-ys[j::num_sat_parts])**2 
-                            + (zs[i::num_sat_parts]-zs[j::num_sat_parts])**2)**0.5
+            distances[:,k] = ((x[i::num_sat_parts]-x[j::num_sat_parts])**2 
+                            + (y[i::num_sat_parts]-y[j::num_sat_parts])**2 
+                            + (z[i::num_sat_parts]-z[j::num_sat_parts])**2)**0.5
             # This works as all halos have the same number of sat particles so 
             # [::num_sat_parts] is actually looping the specific paircount 
             # (particles i and j) over every halo
