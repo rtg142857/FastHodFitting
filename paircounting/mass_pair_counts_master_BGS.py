@@ -28,7 +28,7 @@ x, y, z, Mvir, x_sat, y_sat, z_sat, Mvir_sat = fasthod.split_cen_sat(x,y,z,Mvir,
 
 import multiprocessing
 
-num_threads = 2  # multiprocessing.cpu_count()
+num_threads =  multiprocessing.cpu_count()
 print("CPUS total ",num_threads)
 print("total particles ",len(x))
 

@@ -39,7 +39,7 @@ Mvir_sat = Mvir_sat[::num_sat_parts]
 
 import multiprocessing
 
-num_threads = 2  # multiprocessing.cpu_count()
+num_threads = multiprocessing.cpu_count()
 print("CPUS total ",num_threads)
 print("total particles ",len(x))
 
@@ -54,7 +54,7 @@ npairs_test = fasthod.create_npairs_corrfunc(samples_test,samples_sat,r_bin_edge
 npairs_mass_r_bins_test = fasthod.npairs_conversion(samples_test,samples_sat,npairs_test,r_bin_edges)
 print('pair counting done')
 end_time_2 = time.time()
-np.save(run_label+"_cen_sat.npy",npairs_mass_r_bins_test)
+np.save(run_label+"_censat.npy",npairs_mass_r_bins_test)
 
 print(run_label)
 print(path)

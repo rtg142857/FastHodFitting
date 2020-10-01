@@ -38,7 +38,7 @@ Mvir_sat = Mvir_sat[::num_sat_parts]
 
 import multiprocessing
 
-num_threads = 2  # multiprocessing.cpu_count()
+num_threads = multiprocessing.cpu_count()
 print("CPUS total ",num_threads)
 print("total particles ",len(x))
 
