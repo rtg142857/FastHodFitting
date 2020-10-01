@@ -10,6 +10,6 @@ mass_bin_edges = np.logspace(1,6,101)
 
 num_sat_parts = 3
 
-run_label = "test_case"
+run_label = "test_3"
 
 

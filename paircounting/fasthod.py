@@ -110,7 +110,7 @@ def mass_mask(x,y,z,Mvir,mass_bin_edges):
     """
     samples_ = []
     for i in range(len(mass_bin_edges)-1):
-        mass_mask = (np.array(Mvir>mass_bin_edges[i]) 
+        mass_mask = (np.array(Mvir>=mass_bin_edges[i]) 
                   & np.array(Mvir<mass_bin_edges[i+1]))
         samples_.append(np.vstack((x[mass_mask],y[mass_mask],z[mass_mask])).T)
     return samples_
