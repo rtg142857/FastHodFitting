@@ -11,7 +11,7 @@ import h5py
 import sys
 import time
 import emcee
-
+from multiprocessing import Pool
 import config
 import config_fitting
 # Load parameters from config file
@@ -260,10 +260,9 @@ def perform_fitting(target_number):
     print("Target Density: ",10**target_num_den[target_number,1])
     nwalkers, ndim = walker_init_pos.shape
     start_time = time.time()
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, args=(target, target_density))
-    
-
-    sampler.run_mcmc(walker_init_pos, num_steps);
+    with Pool() as pool:
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, pool = pool, args=(target, target_density))
+        sampler.run_mcmc(walker_init_pos, num_steps);
     end_time = time.time()
     print("fitting took ", end_time - start_time, " seconds")
     return sampler

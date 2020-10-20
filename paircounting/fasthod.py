@@ -115,8 +115,26 @@ def mass_mask(x,y,z,Mvir,mass_bin_edges):
         samples_.append(np.vstack((x[mass_mask],y[mass_mask],z[mass_mask])).T)
     return samples_
 
-
-
+def subsample(samples,subsample_array):
+    """
+    Subsamples the halos contained in the samples array according to the 
+    factors contained in the subsample_array
+    """
+    if len(samples)!= len(subsample_array):
+        raise ValueError("number of mass bins is not the same between samples and subsample_array")
+    samples_new = []
+    for i in range(len(samples)):
+        num_part = len(samples[i][:,0])
+        subsample_ratio = subsample_array[i]
+        randoms = np.random.choice(np.arange(num_part),int(num_part*subsample_ratio),replace = False)
+        print(i)
+        print(len(samples[i][:,0]))
+        samples_new.append(samples[i][randoms,:])
+        print(len(samples_new[i][:,0]))
+    return samples_new
+    
+    
+    
 def create_npairs_corrfunc(samples1,samples2,r_bin_edges,boxsize,num_threads):
     """"
     Takes two lists created from mass_mask(), radial bins, a boxsize,

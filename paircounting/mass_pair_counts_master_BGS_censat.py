@@ -20,7 +20,7 @@ r_bin_edges = config.r_bin_edges
 mass_bin_edges = config.mass_bin_edges
 num_sat_parts = int(config.num_sat_parts)
 run_label = config.run_label
-
+subsample_array = config.subsample_array
 # In this case we have an hdf5 file so read in using h5py
 
 
@@ -36,7 +36,6 @@ y_sat = y_sat[::num_sat_parts]
 z_sat = z_sat[::num_sat_parts]
 Mvir_sat = Mvir_sat[::num_sat_parts]
 
-
 import multiprocessing
 
 num_threads = multiprocessing.cpu_count()
@@ -46,7 +45,12 @@ print("total particles ",len(x))
 start_time = time.time()
 
 samples_test = fasthod.mass_mask(x,y,z,Mvir,mass_bin_edges)
-samples_sat = fasthod.mass_mask(x_sat,y_sat,z,Mvir_sat,mass_bin_edges)
+samples_sat = fasthod.mass_mask(x_sat,y_sat,z_sat,Mvir_sat,mass_bin_edges)
+
+
+samples_test = fasthod.subsample(samples_test,subsample_array)
+
+samples_sat = fasthod.subsample(samples_sat,subsample_array)
 
 end_time_1 = time.time()
 print('starting pair counting')

@@ -10,6 +10,6 @@ mass_bin_edges = np.logspace(1,6,101)
 
 num_sat_parts = 3
 
-run_label = "test_3"
+run_label = "test_0.1"
 
-
+subsample_array = np.ones(100)*0.1 # Constant 10% for now

@@ -8,7 +8,7 @@ from scipy.special import erf
 
 # Import values from paircounting config file
 import config
-
+import numpy as np
 path = config.path
 
 boxsize = config.boxsize
@@ -30,7 +30,7 @@ num_walkers = 20
 
 # Run label for paircounting so the results can be read in
 # Could make this dynamic so it used run label from above
-run_path = "/cosma7/data/durham/dc-grov1/Halo_mass_pair_binning/Github/FastHodFitting/paircounting/test"
+run_path = "/cosma7/data/durham/dc-grov1/Halo_mass_pair_binning/Github/FastHodFitting/paircounting/test_4"
 
 # Include cen and sat HOD definitions in here as they can change when fitting different things
 
@@ -55,7 +55,11 @@ def likelihood_calc(model,y,err):
     return likelihood
     
 # Target correlation function to fit to
+# Rescale this by the cosmology factor here:
+cosmo_factor = np.genfromtxt("cosmology_rescaling_factor.txt")
 target_2pcf = np.genfromtxt("/cosma7/data/durham/dc-grov1/Halo_mass_pair_binning/BGS/xi_r_mxxl.dat")
+for i in range(10):
+    target_2pcf[:,i] = target_2pcf[:,i] * cosmo_factor
 
 # Target number density array
 target_num_den = np.genfromtxt("/cosma7/data/durham/dc-grov1/Halo_mass_pair_binning/BGS/target_number_density.dat")

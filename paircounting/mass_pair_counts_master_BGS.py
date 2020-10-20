@@ -16,7 +16,7 @@ r_bin_edges = config.r_bin_edges
 mass_bin_edges = config.mass_bin_edges
 num_sat_parts = config.num_sat_parts
 run_label = config.run_label
-
+subsample_array = config.subsample_array
 
 # In this case we have an hdf5 file so read in using h5py
 
@@ -34,6 +34,9 @@ print("total particles ",len(x))
 
 start_time = time.time()
 samples_test = fasthod.mass_mask(x,y,z,Mvir,mass_bin_edges)
+
+samples_test = fasthod.subsample(samples_test,subsample_array)
+
 end_time_1 = time.time()
 print('starting pair counting')
 npairs_test = fasthod.create_npairs_corrfunc(samples_test,samples_test,r_bin_edges,boxsize,num_threads)
