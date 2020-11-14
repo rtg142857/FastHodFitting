@@ -174,16 +174,12 @@ def create_randoms_for_corrfunc(npart,r_bin_edges,boxsize):
     return RR
 
 def calc_number_density(hod_cen_big,hod_sat_big,
-                        mass_function_big):
+                        cen_halos_big,boxsize):
     """
     A function which caluculates the number density of halos from the hod
     and a mass function
     """
-    # Include a units factor to convert from the number of halos to the number density
-    # Here it is chosen to fit the number density which Alex provided, but in general will scale with 
-    # boxsize 
-    units_factor = 5 / 200
-    num_density = (np.sum(hod_cen_big*10**mass_function_big) + np.sum(hod_sat_big*10**mass_function_big)) * units_factor
+    num_density = (np.sum(hod_cen_big*cen_halos_big) + np.sum(hod_sat_big*cen_halos_big)) / (boxsize**3)
 
     return num_density
     
@@ -204,7 +200,7 @@ def log_likelihood(params, target, target_density):
                 boxsize)
 
     number_density = calc_number_density(hod_cen_big,hod_sat_big,
-                        mass_function_big)
+                        cen_halos_big,boxsize)
 
     # Likelihood from fitting cf
     likelihood = likelihood_calc(cf,target,err) 
@@ -291,14 +287,10 @@ if __name__ == "__main__":
     # cen_halos_big = np.load("cen_halos_big.npy")
     # sat_halos_big = np.load("sat_halos_big.npy")
 
-    # Now interpolate the number density in the fine grained mass bins for number density estimates later
+    # Now get the finer grained mass bin centres for accuarate HOD estimation
 
     mass_bin_centres_big = mass_bins_big[:-1] + np.diff(mass_bins_big)
-    mass_function_big = np.interp(fp=mass_function[:,1]-2,xp = 10**mass_function[:,0],x = mass_bin_centres_big)
-
-    # Important to note that this takes (mass_function - 2) because of units consistency
-    # If you change this make sure to also change units_factor in fasthod_fitting.calc_number_density()
-
+    
     # Now load in the mass - r binned paircounts:
 
     cencen = np.load(run_path + "_cencen.npy")
