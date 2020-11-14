@@ -292,12 +292,51 @@ def perform_fitting(target_number):
     print("fitting took ", end_time - start_time, " seconds")
     return sampler
 
-def plot_results():
+def plot_HODs(HODs):
     """
-    leave blank for now, just save results and do plotting later
+    Plot HOD/s resulting from fits
     """
+    plt.figure(figsize = (8,8))
+    plt.plot(mass_bin_edges + np.diff(mass_bin_edges)/2,HODs,c="C"+str(i),label=i)
+    plt.ylim(1e-2,1e2)
+    plt.yscale("log")
+    plt.xscale("log")
+    plt.legend(title = "Magnitude")
+    plt.ylabel("n")
+    plt.xlabel("Halo Mass /Solar Masses")
+    plt.savefig(run_label+"_HODs.png",bbox_inches="tight")
     return 0
 
+def plot_CFs(CFs):
+    """
+    Plot CF ratio/s from fits
+    """
+    r_bin_centres = 10**(np.log10(r_bin_edges) + np.diff(np.log10(r_bin_edges))/2 )
+    plt.plot(r_bin_centres,CFs,c="C"+str(i))#,linestyle="--",alpha=0.6)
+    plt.xscale("log")
+    plt.xlabel("r [Mpc/h]")
+    plt.ylabel(r"$\xi$(r) ratio")
+    plt.legend(title = "Magnitude")
+    plt.ylim(0.5,2)
+    plt.grid()
+    plt.savefig(output_name+"_corrfunc_ratio.png",bbox_inches="tight")
+    plt.show()
+    return 0
+
+
+def max_like_params(sampler):
+    """Get the parameters which provide the maximum likelihood from the sampling"""
+
+    # Only take after the first 1000 steps to allow burn in
+    flat_samples = sampler.backend.get_chain()[1000:,:,:]
+    likelihoods = sampler.backend.get_log_prob()[1000:,:]
+    
+    # Find the maximum likelihood parameter position
+    best_param_index1 = np.argmax(likelihoods,axis = 0)
+    best_param_index2 = np.argmax(likelihoods,axis = 1)
+    best_params = flat_samples[best_param_index1,best_param_index2,:]
+    
+    return best_params
 
 
 
@@ -357,6 +396,31 @@ if __name__ == "__main__":
     np.save(save_path+"_log_probs.npy",samplers_to_save_probs)
 
 
+    # Plot the results
+    # Find the max likelihood parameters
+
+    best_params = np.zeros((9,len(initial_params))
+    for i i range(9):
+        best_params = max_like_params(samplers[i])
+
+    # Plot the HODs and Correlation Function Ratios - 
+    # plotting parameters is hard without knowledge of how many there are
+    
+    HODs = np.zeros((len(mass_bin_edges)-1,9))
+    CFs = np.zeros((len(r_bin_edges)-1,9))
+    
+    for i in range(9):
+        hod_cen_big = Cen_HOD(params,mass_bin_centres_big)
+        hod_sat_big = Sat_HOD(params,hod_cen_big,mass_bin_centres_big)
 
 
+        hod_cen = create_accurate_HOD(hod_cen_big,cen_halos_big,mass_bin_edges,num_mass_bins_big)
+        hod_sat = create_accurate_HOD(hod_sat_big,sat_halos_big,mass_bin_edges,num_mass_bins_big)
+        cf = create_2pcf(hod_cen,hod_sat,cencen,censat,satsat,satsat_onehalo,num_sat_parts,
+                hod_cen_big,hod_sat_big,cen_halos_big,sat_halos_big,
+                boxsize)
+        HODs[:,i] = hod_cen + hod_sat
+        Cfs[:,i] = cf / target_2pcf[:,i]
+        
 
+    return(0)
