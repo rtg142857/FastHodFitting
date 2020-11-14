@@ -98,7 +98,36 @@ def calc_hmf(path, num_mass_bins_big,mass_bin_edges):
     sat_halos_big = np.histogram(mass_sats,bins = mass_bins_big)[0]
     
     return mass_bins_big, cen_halos_big, sat_halos_big
-   
+
+def calc_hmf_ascii(path, num_mass_bins_big,mass_bin_edges):
+    """
+    Calculate the hmf from the catalog
+    """
+
+    path = sys.argv[1]
+    Mvir, PID = np.loadtxt(path,usecols=(2,41),unpack=True)
+
+
+    # Only take the central halos as we shall create our own satellite particles later
+    mask1 = np.where(PID == -1)
+
+    Mvir = Mvir[mask1]
+
+
+    mass_min = mass_bin_edges[0]
+    mass_max = mass_bin_edges[-1]
+
+
+    # Go for a large number of sub bins for accuracy
+    mass_bins_big = np.logspace(np.log10(mass_min),np.log10(mass_max),num_mass_bins_big + 1)
+    cen_halos_big = np.histogram(Mvir,bins = mass_bins_big)[0]
+    sat_halos_big = np.histogram(Mvir,bins = mass_bins_big)[0]
+
+    return mass_bins_big, cen_halos_big, sat_halos_big
+ 
+
+
+  
 def create_weighting_factor(mass_pair_array,hod1,hod2):
     """
     Multiply the array by the relevant HODs and then sum over the mass bins
