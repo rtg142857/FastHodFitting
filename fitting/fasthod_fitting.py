@@ -297,21 +297,22 @@ def plot_HODs(HODs):
     Plot HOD/s resulting from fits
     """
     plt.figure(figsize = (8,8))
-    plt.plot(mass_bin_edges + np.diff(mass_bin_edges)/2,HODs,c="C"+str(i),label=i)
-    plt.ylim(1e-2,1e2)
-    plt.yscale("log")
+    plt.plot(mass_bin_edges[:-1] + np.diff(mass_bin_edges)/2,HODs,c="C"+str(i),label=i)
+    #plt.ylim(0,2e-1)
+    #plt.yscale("log")
     plt.xscale("log")
     plt.legend(title = "Magnitude")
     plt.ylabel("n")
     plt.xlabel("Halo Mass /Solar Masses")
-    plt.savefig(run_label+"_HODs.png",bbox_inches="tight")
+    plt.savefig(save_path+"_HODs.png",bbox_inches="tight")
+    plt.close()
     return 0
 
 def plot_CFs(CFs):
     """
     Plot CF ratio/s from fits
     """
-    r_bin_centres = 10**(np.log10(r_bin_edges) + np.diff(np.log10(r_bin_edges))/2 )
+    r_bin_centres = 10**(np.log10(r_bin_edges[:-1]) + np.diff(np.log10(r_bin_edges))/2 )
     plt.plot(r_bin_centres,CFs,c="C"+str(i))#,linestyle="--",alpha=0.6)
     plt.xscale("log")
     plt.xlabel("r [Mpc/h]")
@@ -319,8 +320,8 @@ def plot_CFs(CFs):
     plt.legend(title = "Magnitude")
     plt.ylim(0.5,2)
     plt.grid()
-    plt.savefig(output_name+"_corrfunc_ratio.png",bbox_inches="tight")
-    plt.show()
+    plt.savefig(save_path+"_corrfunc_ratio.png",bbox_inches="tight")
+    plt.close()
     return 0
 
 
@@ -330,12 +331,14 @@ def max_like_params(sampler):
     # Only take after the first 1000 steps to allow burn in
     flat_samples = sampler.backend.get_chain()[1000:,:,:]
     likelihoods = sampler.backend.get_log_prob()[1000:,:]
-    
+
     # Find the maximum likelihood parameter position
+
+    print(np.shape(likelihoods))
     best_param_index1 = np.argmax(likelihoods,axis = 0)
-    best_param_index2 = np.argmax(likelihoods,axis = 1)
-    best_params = flat_samples[best_param_index1,best_param_index2,:]
-    
+    best_param_index2 = np.argmax(samplers[0].get_log_prob()[best_param_index1,np.arange(20)])
+    best_params = flat_samples[best_param_index1[best_param_index2],best_param_index2,:]
+
     return best_params
 
 
@@ -407,8 +410,9 @@ if __name__ == "__main__":
     # plotting parameters is hard without knowledge of how many there are
     
     HODs = np.zeros((len(mass_bin_edges)-1,9))
-    CFs = np.zeros((len(r_bin_edges)-1,9))
-    
+    CF_ratio = np.zeros((len(r_bin_edges)-1,9))
+    CFs = np.zeros((len(r_bin_edges)-1,9))    
+
     for i in range(9):
         hod_cen_big = Cen_HOD(params,mass_bin_centres_big)
         hod_sat_big = Sat_HOD(params,hod_cen_big,mass_bin_centres_big)
@@ -420,7 +424,16 @@ if __name__ == "__main__":
                 hod_cen_big,hod_sat_big,cen_halos_big,sat_halos_big,
                 boxsize)
         HODs[:,i] = hod_cen + hod_sat
-        Cfs[:,i] = cf / target_2pcf[:,i]
-        
+        CF_ratio[:,i] = cf / target_2pcf[:,i]
+        CFs[:,i] = cf
+        num_den = calc_number_density(hod_cen_big,hod_sat_big,
+                        cen_halos_big,boxsize)
 
-    return(0)
+    r_bin_centres = 10**(np.log10(r_bin_edges[:-1]) + np.diff(np.log10(r_bin_edges))/2 )
+    cf_to_save = np.zeros((len(r_bin_centres),2))
+    cf_to_save[:,0] = r_bin_centres
+    cf_to_save[:,1:] = cf
+    np.savetxt(save_path+"_CF.txt",cf_to_save)
+    np.savetxt(save_path+"_num_den.txt",np.array([num_den]))
+    plot_CFs(CF_ratio)
+    plot_HODs(HODs)
