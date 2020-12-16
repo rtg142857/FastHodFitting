@@ -23,21 +23,56 @@ run_label = config.run_label
 
 
 # Number of steps to take with each emcee walker
-num_steps = 1000
+num_steps = 5000
 
 # Number of walkers to use in the emcee fitting 
 num_walkers = 20
 
 # Run label for paircounting so the results can be read in
 # Could make this dynamic so it used run label from above
-run_path = "/cosma7/data/durham/dc-grov1/Halo_mass_pair_binning/Github/FastHodFitting/paircounting/test_4"
+run_path = "/cosma7/data/durham/dc-grov1/Halo_mass_pair_binning/BGS/reduced_catalog/FastHodFitting/fitting/FastHodFitting/paircounting/subsample_pairs"
 
 # Include cen and sat HOD definitions in here as they can change when fitting different things
+def spline_kernel_integral(x):
+    """
+    Returns the integral of the unscaled spline kernel function from -1 to x
+    """
+    if hasattr(x, "__len__"):
+        # x in an array
+        integral = np.zeros(len(x))
+        absx = abs(x)
+        ind = absx < 0.5
+        integral[ind] = absx[ind] - 2*absx[ind]**3 + 1.5*absx[ind]**4
+        ind = np.logical_and(absx >= 0.5, absx < 1.)
+        integral[ind] = 0.375 - 0.5*(1-absx[ind])**4
+        ind = absx >= 1.
+        integral[ind] = 0.375
+        ind = x < 0
+        integral[ind] = -integral[ind]
+    else:
+        # x is a number
+        absx = abs(x)
+        if   absx < 0.5: integral = absx - 2*absx**3 + 1.5*absx**4
+        elif absx < 1:   integral = 0.375 - 0.5*(1-absx)**4
+        else:            integral = 0.375
+        if x < 0: integral = -integral
+    return integral
+
+def cumulative_spline_kernel(x, mean=0, sig=1):
+    """
+    Returns the integral of the rescaled spline kernel function from -inf to x.
+    The spline kernel is rescaled to have the specified mean and standard
+    deviation, and is normalized.
+    """
+    integral = spline_kernel_integral((x-mean)/(sig*np.sqrt(12))) / 0.75
+    y = 0.5 * (1. + 2*integral)
+    return y
+
+# Now change Cen_HOD definition
 
 def Cen_HOD(params,mass_bins):
-    Mmin, sigma_logm = params[:2].copy()
-    Mmin = 10**Mmin
-    result = 0.5*(1+erf((np.log10(mass_bins)-np.log10(Mmin))/sigma_logm))
+    Mmin, sigma_logm = params[:2]
+    result = cumulative_spline_kernel(np.log10(mass_bins), mean = Mmin, sig=sigma_logm/np.sqrt(2))
     return(result)
 
 def Sat_HOD(params,cen_hod,mass_bins):
@@ -66,10 +101,10 @@ target_num_den = np.genfromtxt("/cosma7/data/durham/dc-grov1/Halo_mass_pair_binn
 
 # error to apply to each point on the correlation function, can affect the speed of the fitting and walkers
 # can get stuck in local minima if this is set too small (<0.1) 
-err = 1.
+err = 0.7
 
 # Number density error parameter, affects how tight the target number density constraint is
-num_den_err = 0.01
+num_den_err = 0.01**0.5
 
 # Prior_locations, positions of the priors on the parameters for fitting
 
@@ -90,6 +125,6 @@ num_mass_bins_big = 20000
 
 mass_function = np.genfromtxt("/cosma7/data/durham/dc-grov1/Halo_mass_pair_binning/BGS/mass_function.dat")
 
-random_seed = 1234
+random_seed = 10
 
-save_path = "fits"
+save_path = "fits_5000_less_num_den_subsampled"

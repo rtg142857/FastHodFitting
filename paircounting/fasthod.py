@@ -34,7 +34,7 @@ def read_hdf5(path):
     x = position[:,0]
     y = position[:,1]
     z = position[:,2]
-    Mvir = snap["/mass"][:]
+    Mvir = 1e10 * snap["/mass"][:]
     is_central = snap["/is_central"][:]
     halo_id = snap["/halo_id"][:]
 

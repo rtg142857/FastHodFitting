@@ -5,8 +5,9 @@ This should be imported at the start of any scripts
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib
+matplotlib.use('agg')
+import matplotlib.pyplot as plt
 import h5py
 import sys
 import time
@@ -21,13 +22,15 @@ r_bin_edges = config.r_bin_edges
 mass_bin_edges = config.mass_bin_edges
 num_sat_parts = config.num_sat_parts
 run_label = config.run_label
-
+subsample_array = config.subsample_array
 # Load parameters from fitting config file
 
 num_steps = config_fitting.num_steps
 num_walkers = config_fitting.num_walkers
 run_path = config_fitting.run_path
 Cen_HOD = config_fitting.Cen_HOD
+spline_kernel_integral = config_fitting.spline_kernel_integral
+cumulative_spline_kernel = config_fitting.cumulative_spline_kernel
 Sat_HOD = config_fitting.Sat_HOD
 likelihood_calc = config_fitting.likelihood_calc
 target_2pcf = config_fitting.target_2pcf
@@ -74,8 +77,16 @@ def initialise_walkers(initial_params_random,initial_params,priors,num_walkers):
     return pos
 
         
-    
-    
+def undo_subsampling(mass_pair_array,subsample_array):
+    """
+    Change a halo paircount table to undo the effect of subsampling
+    """
+    altered_mass_pair_array = np.zeros(np.shape(mass_pair_array))
+    for i in range(len(mass_pair_array[:,0,0])):
+        for j in range(len(mass_pair_array[:,0,0])):
+            altered_mass_pair_array[i,j,:] = mass_pair_array[i,j,:] / (subsample_array[i]*subsample_array[j])
+    return altered_mass_pair_array 
+
 def calc_hmf(path, num_mass_bins_big,mass_bin_edges):
     """
     Calculate the hmf from the catalog
@@ -198,7 +209,7 @@ def create_randoms_for_corrfunc(npart,r_bin_edges,boxsize):
     global_volume = boxsize**3  # volume of simulation
 
     # calculate the random-random pairs using density * shell volume
-    rhor = (NR**2)/global_volume
+    rhor = (NR*(NR-1))/global_volume
     RR = (dv*rhor)
     return RR
 
@@ -285,9 +296,9 @@ def perform_fitting(target_number):
     print("Target Density: ",10**target_num_den[target_number,1])
     nwalkers, ndim = walker_init_pos.shape
     start_time = time.time()
-    with Pool() as pool:
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, pool = pool, args=(target, target_density))
-        sampler.run_mcmc(walker_init_pos, num_steps);
+    #with Pool() as pool:
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, args=(target, target_density))
+    sampler.run_mcmc(walker_init_pos, num_steps);
     end_time = time.time()
     print("fitting took ", end_time - start_time, " seconds")
     return sampler
@@ -297,9 +308,10 @@ def plot_HODs(HODs):
     Plot HOD/s resulting from fits
     """
     plt.figure(figsize = (8,8))
-    plt.plot(mass_bin_edges[:-1] + np.diff(mass_bin_edges)/2,HODs,c="C"+str(i),label=i)
-    #plt.ylim(0,2e-1)
-    #plt.yscale("log")
+    for i in range(len(HODs[0,:])):
+        plt.plot(mass_bin_edges[:-1] + np.diff(mass_bin_edges)/2,HODs[:,i],c="C"+str(i),label=i)
+    plt.ylim(1e-3)
+    plt.yscale("log")
     plt.xscale("log")
     plt.legend(title = "Magnitude")
     plt.ylabel("n")
@@ -312,8 +324,10 @@ def plot_CFs(CFs):
     """
     Plot CF ratio/s from fits
     """
-    r_bin_centres = 10**(np.log10(r_bin_edges[:-1]) + np.diff(np.log10(r_bin_edges))/2 )
-    plt.plot(r_bin_centres,CFs,c="C"+str(i))#,linestyle="--",alpha=0.6)
+    #plt.figure(figsize = (10,8))
+    for i in range(len(CFs[0,:])):
+        r_bin_centres = 10**(np.log10(r_bin_edges[:-1]) + np.diff(np.log10(r_bin_edges))/2 )
+        plt.plot(r_bin_centres,CFs[:,i],c="C"+str(i))#,linestyle="--",alpha=0.6)
     plt.xscale("log")
     plt.xlabel("r [Mpc/h]")
     plt.ylabel(r"$\xi$(r) ratio")
@@ -329,8 +343,8 @@ def max_like_params(sampler):
     """Get the parameters which provide the maximum likelihood from the sampling"""
 
     # Only take after the first 1000 steps to allow burn in
-    flat_samples = sampler.backend.get_chain()[1000:,:,:]
-    likelihoods = sampler.backend.get_log_prob()[1000:,:]
+    flat_samples = sampler.backend.get_chain()[:,:,:]
+    likelihoods = sampler.backend.get_log_prob()[:,:]
 
     # Find the maximum likelihood parameter position
 
@@ -338,7 +352,8 @@ def max_like_params(sampler):
     best_param_index1 = np.argmax(likelihoods,axis = 0)
     best_param_index2 = np.argmax(samplers[0].get_log_prob()[best_param_index1,np.arange(20)])
     best_params = flat_samples[best_param_index1[best_param_index2],best_param_index2,:]
-
+    print(best_param_index1[best_param_index2],best_param_index2)
+    print(samplers[0].get_log_prob()[best_param_index1[best_param_index2],best_param_index2])
     return best_params
 
 
@@ -360,7 +375,7 @@ if __name__ == "__main__":
 
     # Now get the finer grained mass bin centres for accuarate HOD estimation
 
-    mass_bin_centres_big = mass_bins_big[:-1] + np.diff(mass_bins_big)
+    mass_bin_centres_big = mass_bins_big[:-1] + np.diff(mass_bins_big)/2
     
     # Now load in the mass - r binned paircounts:
 
@@ -368,7 +383,12 @@ if __name__ == "__main__":
     censat = np.load(run_path + "_censat.npy")
     satsat = np.load(run_path + "_satsat.npy")
     satsat_onehalo = np.load(run_path + "_satsat_onehalo.npy")
+    
+    # Undo the subsampling
 
+    cencen = undo_subsampling(cencen,subsample_array)
+    censat = undo_subsampling(censat,subsample_array)
+    satsat = undo_subsampling(satsat,subsample_array)
     # Set the random seed
 
     np.random.seed(random_seed)
@@ -380,6 +400,7 @@ if __name__ == "__main__":
         samplers.append(samples)
         
         # Print the parameters at the end of the chain to check they are reasonable
+        print("Parameters at the end of the fitting chain: (These aren't best fits, just a sanity check)")
         print(samples.backend.get_chain()[-1,0,:])
 
     print("All done!")
@@ -402,9 +423,10 @@ if __name__ == "__main__":
     # Plot the results
     # Find the max likelihood parameters
 
-    best_params = np.zeros((9,len(initial_params))
-    for i i range(9):
-        best_params = max_like_params(samplers[i])
+    best_params = np.zeros((9,len(initial_params)))
+    for i in range(9):
+        best_params[i,:] = max_like_params(samplers[i])
+        print(best_params[i,:])
 
     # Plot the HODs and Correlation Function Ratios - 
     # plotting parameters is hard without knowledge of how many there are
@@ -412,8 +434,9 @@ if __name__ == "__main__":
     HODs = np.zeros((len(mass_bin_edges)-1,9))
     CF_ratio = np.zeros((len(r_bin_edges)-1,9))
     CFs = np.zeros((len(r_bin_edges)-1,9))    
-
+    Num_dens = np.zeros(9)
     for i in range(9):
+        params = best_params[i,:]
         hod_cen_big = Cen_HOD(params,mass_bin_centres_big)
         hod_sat_big = Sat_HOD(params,hod_cen_big,mass_bin_centres_big)
 
@@ -424,16 +447,17 @@ if __name__ == "__main__":
                 hod_cen_big,hod_sat_big,cen_halos_big,sat_halos_big,
                 boxsize)
         HODs[:,i] = hod_cen + hod_sat
-        CF_ratio[:,i] = cf / target_2pcf[:,i]
+        CF_ratio[:,i] = cf / target_2pcf[:,i+1]
         CFs[:,i] = cf
+        #print(CF_ratio)
         num_den = calc_number_density(hod_cen_big,hod_sat_big,
                         cen_halos_big,boxsize)
-
+        Num_dens[i] = num_den
     r_bin_centres = 10**(np.log10(r_bin_edges[:-1]) + np.diff(np.log10(r_bin_edges))/2 )
-    cf_to_save = np.zeros((len(r_bin_centres),2))
+    cf_to_save = np.zeros((len(r_bin_centres),10))
     cf_to_save[:,0] = r_bin_centres
-    cf_to_save[:,1:] = cf
+    cf_to_save[:,1:] = CFs
     np.savetxt(save_path+"_CF.txt",cf_to_save)
-    np.savetxt(save_path+"_num_den.txt",np.array([num_den]))
+    np.savetxt(save_path+"_num_den.txt",Num_dens)
     plot_CFs(CF_ratio)
     plot_HODs(HODs)
