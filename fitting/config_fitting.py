@@ -123,7 +123,6 @@ initial_params = np.array([12,0.1,10,13,0.9])
 
 num_mass_bins_big = 20000
 
-mass_function = np.genfromtxt("/cosma7/data/durham/dc-grov1/Halo_mass_pair_binning/BGS/mass_function.dat")
 
 random_seed = 10
 

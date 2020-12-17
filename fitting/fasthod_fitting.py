@@ -41,7 +41,6 @@ priors = config_fitting.priors
 initial_params_random = config_fitting.initial_params_random
 initial_params = config_fitting.initial_params
 num_mass_bins_big = config_fitting.num_mass_bins_big
-mass_function = config_fitting.mass_function
 random_seed = config_fitting.random_seed
 
 save_path = config_fitting.save_path

@@ -17,11 +17,8 @@ def var_sample(a,b): # slope = a, full sample mass = b
     subsampling[subsampling > 1] = 1
     return subsampling
 
-print(mass_bin_edges)
-print(mass_bin_centres)
 
 subsample_array = var_sample(2,12)
 
-run_label = "subsample_pairs"
 
 
