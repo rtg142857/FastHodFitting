@@ -70,7 +70,7 @@ num_walkers = 20
 
 # Run label for paircounting so the results can be read in
 # Could make this dynamic so it used run label from above
-run_path = "/cosma7/data/durham/dc-grov1/Halo_mass_pair_binning/BGS/reduced_catalog/FastHodFitting/fitting/FastHodFitting/paircounting/red_cat_correct"
+run_path = "/cosma7/data/durham/dc-grov1/Halo_mass_pair_binning/BGS/reduced_catalog/FastHodFitting/fitting/FastHodFitting/paircounting/pairs"
 
 # Include cen and sat HOD definitions in here as they can change when fitting different things
 def spline_kernel_integral(x):
