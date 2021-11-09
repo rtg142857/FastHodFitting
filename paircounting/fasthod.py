@@ -8,8 +8,6 @@ This should be imported at the start of any scripts
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-import halotools
-import halotools.mock_observables
 import h5py
 import sys
 import time
@@ -39,6 +37,94 @@ def read_hdf5(path):
     halo_id = snap["/halo_id"][:]
 
     return x, y, z, Mvir, is_central, halo_id
+
+def read_hdf5_unresolved_tracers(path):
+    """
+    Read in position data for tracers representing halos
+    below the mass resolution limit which are taken
+    from random field particles
+    """
+    snap = h5py.File(path,"r")
+    position = snap["/position"]
+    x = position[:,0]
+    y = position[:,1]
+    z = position[:,2]
+    Mvir = snap["/mass"][:]
+    return x, y, z, Mvir
+
+def read_hdf5_more_files(path):
+    """
+    New halo files are now split into 34 separate files, 
+    need a new read routine to get them all in.
+    Halo ID is not unique between files 
+    """
+    
+    snap = h5py.File(path+"galaxy_tracers_0.hdf5","r")
+    position = snap["/position"]
+    x = position[:,0]
+    y = position[:,1]
+    z = position[:,2]
+    Mvir = snap["/mass"][:]
+    is_central = snap["/is_central"][:]
+    halo_id = snap["/halo_id"][:]
+
+    # There won't be double the number of particles
+    # in another file compared to the first one
+    # So use this to create unique halo IDs
+    id_unique = 2 * len(halo_id)
+    for i in range(1,34):
+        snap = h5py.File(path+"galaxy_tracers_"+str(i)+".hdf5","r")
+        position_temp = snap["/position"]
+        x_temp = position_temp[:,0]
+        y_temp = position_temp[:,1]
+        z_temp = position_temp[:,2]
+        Mvir_temp = snap["/mass"][:]
+        is_central_temp = snap["/is_central"][:]
+        halo_id_temp = snap["/halo_id"][:] + (i * id_unique)
+        
+        x = np.append(x,x_temp)
+        y = np.append(y,y_temp)
+        z = np.append(z,z_temp)
+        Mvir = np.append(Mvir,Mvir_temp)
+        is_central = np.append(is_central,is_central_temp)
+        halo_id = np.append(halo_id,halo_id_temp)
+        print("Reading File Number "+str(i))
+    return x, y, z, Mvir, is_central, halo_id
+
+
+def read_hdf5_more_files_unresolved(path):
+    """
+    New halo files are now split into 34 separate files,
+    need a new read routine to get them all in.
+    Halo ID is not unique between files
+    """
+
+    snap = h5py.File(path+"galaxy_tracers_unresolved_0.hdf5","r")
+    position = snap["/position"]
+    x = position[:,0]
+    y = position[:,1]
+    z = position[:,2]
+    Mvir = snap["/mass"][:]
+
+    # There won't be double the number of particles
+    # in another file compared to the first one
+    # So use this to create unique halo IDs
+    for i in range(1,34):
+        snap = h5py.File(path+"galaxy_tracers_unresolved_"+str(i)+".hdf5","r")
+        position_temp = snap["/position"]
+        x_temp = position_temp[:,0]
+        y_temp = position_temp[:,1]
+        z_temp = position_temp[:,2]
+        Mvir_temp = snap["/mass"][:]
+
+        x = np.append(x,x_temp)
+        y = np.append(y,y_temp)
+        z = np.append(z,z_temp)
+        Mvir = np.append(Mvir,Mvir_temp)
+        print("Reading Unresolved Halo File Number "+str(i))
+    return x, y, z, Mvir
+
+
 
 def read_ascii(path):
     """

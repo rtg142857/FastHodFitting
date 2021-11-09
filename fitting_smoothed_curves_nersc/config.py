@@ -7,14 +7,14 @@ boxsize = 2000
 r_bin_edges = np.logspace(-2,2.2,85)
 # Due to the units in the file, mass bins here are in units of 10^10 Solar Masses,
 # This changes to Solar masses in the fitting so adjust the mass bins there accordingly
-mass_bin_edges = np.logspace(0,6,121)
+mass_bin_edges = np.logspace(10,16,121)
 mass_bin_centres = 10**(np.log10(mass_bin_edges[:-1])+(np.diff(np.log10(mass_bin_edges))/2))
 num_sat_parts = 3
 
 run_label = "pairs"
 
 def var_sample(a,b): # slope = a, complete sample mass = b
-    subsampling = 10**(a*(10 + np.log10(mass_bin_centres) -  b))
+    subsampling = 10**(a*(np.log10(mass_bin_centres) -  b))
     subsampling[subsampling > 1] = 1
     return subsampling
 

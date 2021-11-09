@@ -1,19 +1,19 @@
 #!/bin/bash -l
 
-#SBATCH --ntasks 1
-#SBATCH -J satsat
-#SBATCH -o ./logs/%x.%J.out
-#SBATCH -p cosma7
-#SBATCH -A dp004
-#SBATCH --exclusive
-#SBATCH -t 24:00:00
+#!/bin/bash
+#SBATCH -p regular
+#SBATCH -o logs/paircounting_test_satsat
+#SBATCH --time=240
+#SBATCH --nodes=1
+#SBATCH --tasks-per-node=32
+#SBATCH --constraint=haswell
+# load nbodykit
 #SBATCH --mail-type=END    # notifications for job
 #SBATCH --mail-user=cameron.grove@durham.ac.uk
 
-
-module purge
-module load python/3.6.5
-
+module load gcc
+module load gsl
+module unload craype-hugepages2M
 python3 satsat.py
 
 

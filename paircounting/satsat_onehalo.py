@@ -2,8 +2,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-import halotools
-import halotools.mock_observables
 import h5py
 import sys
 import time
@@ -24,7 +22,7 @@ run_label = config.run_label
 # In this case we have an hdf5 file so read in using h5py
 
 
-x, y, z, Mvir, is_central, halo_id = fasthod.read_hdf5(path)
+x, y, z, Mvir, is_central, halo_id = fasthod.read_hdf5_more_files(path)
 
 x, y, z, Mvir, x_sat, y_sat, z_sat, Mvir_sat = fasthod.split_cen_sat(x,y,z,Mvir,is_central,halo_id)
 

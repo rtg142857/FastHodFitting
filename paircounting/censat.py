@@ -2,8 +2,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-import halotools
-import halotools.mock_observables
 import h5py
 import sys
 import time
@@ -12,7 +10,8 @@ from Corrfunc.theory.DD import DD
 import fasthod
 import config
 print("reading in data")
-
+import time
+time.sleep(1)
 # Load data from config file
 path = config.path
 boxsize = config.boxsize
@@ -24,17 +23,34 @@ subsample_array = config.subsample_array
 # In this case we have an hdf5 file so read in using h5py
 
 
-x, y, z, Mvir, is_central, halo_id = fasthod.read_hdf5(path)
+x, y, z, Mvir, is_central, halo_id = fasthod.read_hdf5_more_files(path)
 
 x, y, z, Mvir, x_sat, y_sat, z_sat, Mvir_sat = fasthod.split_cen_sat(x,y,z,Mvir,is_central,halo_id)
-
-# Now we only want to take 1 satellite particle per halo
-# Currently 3 satellite particles per halo
 
 x_sat = x_sat[::num_sat_parts]
 y_sat = y_sat[::num_sat_parts]
 z_sat = z_sat[::num_sat_parts]
 Mvir_sat = Mvir_sat[::num_sat_parts]
+samples_sat = fasthod.mass_mask(x_sat,y_sat,z_sat,Mvir_sat,mass_bin_edges)
+samples_sat = fasthod.subsample(samples_sat,subsample_array)
+del x_sat
+del y_sat
+del z_sat
+del Mvir_sat
+del halo_id
+del is_central
+
+x_t, y_t, z_t, Mvir_t = fasthod.read_hdf5_more_files_unresolved(path)
+
+x = np.append(x,x_t)
+y = np.append(y,y_t)
+z = np.append(z,z_t)
+Mvir = np.append(Mvir,Mvir_t)
+
+
+# Now we only want to take 1 satellite particle per halo
+# Currently 3 satellite particles per halo
+
 
 import multiprocessing
 
@@ -45,12 +61,10 @@ print("total particles ",len(x))
 start_time = time.time()
 
 samples_test = fasthod.mass_mask(x,y,z,Mvir,mass_bin_edges)
-samples_sat = fasthod.mass_mask(x_sat,y_sat,z_sat,Mvir_sat,mass_bin_edges)
 
 
 samples_test = fasthod.subsample(samples_test,subsample_array)
 
-samples_sat = fasthod.subsample(samples_sat,subsample_array)
 
 end_time_1 = time.time()
 print('starting pair counting')

@@ -21,9 +21,16 @@ subsample_array = config.subsample_array
 # In this case we have an hdf5 file so read in using h5py
 
 
-x, y, z, Mvir, is_central, halo_id = fasthod.read_hdf5(path)
+x, y, z, Mvir, is_central, halo_id = fasthod.read_hdf5_more_files(path)
 
 x, y, z, Mvir, x_sat, y_sat, z_sat, Mvir_sat = fasthod.split_cen_sat(x,y,z,Mvir,is_central,halo_id)
+
+x_t, y_t, z_t, Mvir_t = fasthod.read_hdf5_more_files_unresolved(path)
+
+x = np.append(x,x_t)
+y = np.append(y,y_t)
+z = np.append(z,z_t)
+Mvir = np.append(Mvir,Mvir_t)
 
 
 import multiprocessing
