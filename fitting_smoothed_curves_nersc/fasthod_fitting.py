@@ -365,7 +365,7 @@ def log_likelihood_calc(params, target, target_density,target_number):
 
     # Add them both together to get the total likelihood
     l_likelihood = likelihood + likelihood_num_den
-    return l_likelihood
+    return l_likelihood, hod_cen+hod_sat
 
 
 def log_likelihood(params, target, target_density):
@@ -376,8 +376,17 @@ def log_likelihood(params, target, target_density):
     """
     hod_params = create_hod_params(params)
     like_total = 0
+    num_den_old = np.zeros(len(mass_bin_edges)-1)
     for i in range(len(hod_params[:,0])):
-        like_total += log_likelihood_calc(hod_params[i,:],target,target_density[i],i)
+        like_calc, num_den_current = log_likelihood_calc(hod_params[i,:],target,target_density[i],i)
+        like_total += like_calc
+        if np.sum((num_den_current < num_den_old))>=1:
+            #print(np.sum((num_den_current < num_den_old)))
+            #print(num_den_current - num_den_old)
+            like_total += -400 # add a cost per overlap
+
+            #like_total += log_likelihood_calc(hod_params[i,:],target,target_density[i],i)
+        num_den_old = num_den_current.copy()
     l_likelihood = like_total / (len(hod_params[:,0])-2) # To move to the same scale as previous runs, -2 is for the -17,-17.5 targets
     return l_likelihood
     
