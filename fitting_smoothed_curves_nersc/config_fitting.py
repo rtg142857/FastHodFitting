@@ -97,7 +97,8 @@ for i in range(10):
     target_2pcf[:,i] = target_2pcf[:,i] * cosmo_factor
 
 # Target number density array
-target_num_den = np.genfromtxt("target_number_density.dat")
+# target_num_den = np.genfromtxt("target_number_density.dat")
+target_num_den = np.genfromtxt("target_num_den_c004.txt") # Temporary ajustment for test
 
 # error to apply to each point on the correlation function, can affect the speed of the fitting and walkers
 # can get stuck in local minima if this is set too small (<0.1) 
