@@ -86,7 +86,9 @@ def Sat_HOD(params,cen_hod,mass_bins):
 
 def likelihood_calc(model,y,err):
     # Here take a constant fractional error and exclude BAO scale
-    likelihood = - 0.5 * (np.sum((1 - (model[:75] / y[:75]))**2) / err**2)
+    #likelihood = - 0.5 * (np.sum((1 - (model[:75] / y[:75]))**2) / err**2)
+    # A temporary change to test a feature:
+    likelihood = - 0.5 * (np.sum((1 - (model[:75] / y[:75]))**2 / (2*np.maximum(0.01 * np.logspace(-2,2.2,85)[:75]**-0.5,0.03))**2))
     return likelihood
     
 # Target correlation function to fit to
