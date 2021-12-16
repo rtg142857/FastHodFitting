@@ -25,6 +25,13 @@ x, y, z, Mvir, is_central, halo_id = fasthod.read_hdf5_more_files(path)
 
 x, y, z, Mvir, x_sat, y_sat, z_sat, Mvir_sat = fasthod.split_cen_sat(x,y,z,Mvir,is_central,halo_id)
 
+del x_sat
+del y_sat
+del z_sat
+del Mvir_sat
+del halo_id
+del is_central
+
 x_t, y_t, z_t, Mvir_t = fasthod.read_hdf5_more_files_unresolved(path)
 
 x = np.append(x,x_t)
