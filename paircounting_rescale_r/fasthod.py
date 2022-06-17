@@ -15,7 +15,7 @@ import Corrfunc
 from Corrfunc.theory.DD import DD
 
 
-rescale_r = 0.9758508296342128 # Test using cosmology 159 (most different to MXXL)
+rescale_r = 0.9758508296342128**-1 # Test using cosmology 159 (most different to MXXL)
 
 
 

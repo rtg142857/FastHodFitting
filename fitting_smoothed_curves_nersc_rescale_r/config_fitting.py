@@ -11,7 +11,7 @@ import config
 import numpy as np
 
 
-rescale_r = 0.9758508296342128
+rescale_r = 0.9758508296342128**-1
 
 
 
