@@ -87,12 +87,8 @@ def Sat_HOD(params,cen_hod,mass_bins):
 def likelihood_calc(model,y,err):
     # Here take a constant fractional error and exclude BAO scale
     #likelihood = - 0.5 * (np.sum((1 - (model[:75] / y[:75]))**2) / err**2)
-<<<<<<< HEAD
     # Alternatively use a less tight fit at very small scales, using observed effect of sample variance
     # cutoff at large scales so systematic effects aren't overweighted
-=======
-    # A temporary change to test a feature:
->>>>>>> 256e5bd3e652318599aa8a60c089b4509bc16e08
     likelihood = - 0.5 * (np.sum((1 - (model[:75] / y[:75]))**2 / (2*np.maximum(0.01 * np.logspace(-2,2.2,85)[:75]**-0.5,0.03))**2))
     return likelihood
     
@@ -104,12 +100,8 @@ for i in range(10):
     target_2pcf[:,i] = target_2pcf[:,i] * cosmo_factor
 
 # Target number density array
-<<<<<<< HEAD
-target_num_den = np.genfromtxt("target_num_den_rescaled.dat")
-=======
+target_num_den = np.genfromtxt("target_num_den_rescaled.txt")
 # target_num_den = np.genfromtxt("target_number_density.dat")
-target_num_den = np.genfromtxt("target_num_den_c004.txt") # Temporary ajustment for test
->>>>>>> 256e5bd3e652318599aa8a60c089b4509bc16e08
 
 # error to apply to each point on the correlation function, can affect the speed of the fitting and walkers
 # can get stuck in local minima if this is set too small (<0.1) 
