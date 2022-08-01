@@ -94,7 +94,7 @@ def likelihood_calc(model,y,err):
     
 # Target correlation function to fit to
 # Rescale this by the cosmology factor here:
-cosmo_factor = np.genfromtxt("cosmology_rescaling_factor_zel_8.txt")
+cosmo_factor = np.genfromtxt("cosmology_rescaling_factor_xi_zel_8.txt")
 target_2pcf = np.genfromtxt("xi_r_mxxl.dat")
 for i in range(10):
     target_2pcf[:,i] = target_2pcf[:,i] * cosmo_factor
