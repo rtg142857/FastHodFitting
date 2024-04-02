@@ -13,6 +13,7 @@ import sys
 import time
 import Corrfunc
 from Corrfunc.theory.DD import DD
+from Corrfunc.theory.DDrppi import DDrppi
 
 
 def read_hdf5(path):
@@ -38,6 +39,42 @@ def read_hdf5(path):
 
     return x, y, z, Mvir, is_central, halo_id
 
+def read_hdf5_wp(path):
+    """
+    Read in the data from the halo catalog in hdf5
+    format at the location specified by path.
+
+    Uses the specific hdf5 format provided to me 
+    by Alex Smith when fitting the AbacusSummit
+    catalogs for a BGS mock
+
+    Uses h5py
+    """
+
+    snap = h5py.File(path,"r")
+    position = snap["/position"]
+    x = position[:,0]
+    y = position[:,1]
+    z = position[:,2]
+    velocity = snap["/velocity"]
+    vz = velocity[:,2]
+    Mvir = snap["/mass"][:]
+    is_central = snap["/is_central"][:]
+    halo_id = snap["/halo_id"][:]
+    
+    # apply RSD along the z-direction
+    Hz = 100.0*np.sqrt(Om0*(1.0+z_snap)**3 + Ol0)
+    Hzi = (1+z_snap)/Hz
+    z += vz * Hzi
+
+    # apply periodic boundary conditions
+    s = z < 0
+    z[s] += boxsize
+    s = z >= boxsize
+    z[s] -= boxsize
+    
+    return x, y, z, Mvir, is_central, halo_id
+
 def read_hdf5_unresolved_tracers(path):
     """
     Read in position data for tracers representing halos
@@ -50,9 +87,10 @@ def read_hdf5_unresolved_tracers(path):
     y = position[:,1]
     z = position[:,2]
     Mvir = snap["/mass"][:]
+    
     return x, y, z, Mvir
 
-def read_hdf5_more_files(path):
+def read_hdf5_more_files(path, wp_flag=False, Om0=None, Ol0=None, boxSize=None, z_snap=None):
     """
     New halo files are now split into 34 separate files, 
     need a new read routine to get them all in.
@@ -68,6 +106,22 @@ def read_hdf5_more_files(path):
     is_central = snap["/is_central"][:]
     halo_id = snap["/halo_id"][:]
 
+    if wp_flag:
+        velocity = snap["/velocity"][:]
+        vz = velocity[:,2]
+
+        # apply RSD along the z-direction
+        Hz = 100.0*np.sqrt(Om0*(1.0+z_snap)**3 + Ol0)
+        Hzi = (1+z_snap)/Hz
+        z += vz * Hzi
+
+        # apply periodic boundary conditions
+        s = z < 0
+        z[s] += boxSize
+        s = z >= boxSize
+        z[s] -= boxSize
+    
+    
     # There won't be double the number of particles
     # in another file compared to the first one
     # So use this to create unique halo IDs
@@ -82,6 +136,21 @@ def read_hdf5_more_files(path):
         is_central_temp = snap["/is_central"][:]
         halo_id_temp = snap["/halo_id"][:] + (i * id_unique)
         
+        if wp_flag:
+            velocity_temp = snap["/velocity"][:]
+            vz_temp = velocity_temp[:,2]
+
+            # apply RSD along the z-direction
+            Hz = 100.0*np.sqrt(Om0*(1.0+z_snap)**3 + Ol0)
+            Hzi = (1+z_snap)/Hz
+            z_temp += vz_temp * Hzi
+
+            # apply periodic boundary conditions
+            s = z_temp < 0
+            z_temp[s] += boxSize
+            s = z_temp >= boxSize
+            z_temp[s] -= boxSize
+        
         x = np.append(x,x_temp)
         y = np.append(y,y_temp)
         z = np.append(z,z_temp)
@@ -92,7 +161,8 @@ def read_hdf5_more_files(path):
     return x, y, z, Mvir, is_central, halo_id
 
 
-def read_hdf5_more_files_unresolved(path):
+def read_hdf5_more_files_unresolved(path, wp_flag=False, Om0=None, Ol0=None, boxSize=None, 
+                                    z_snap=None):
     """
     New halo files are now split into 34 separate files,
     need a new read routine to get them all in.
@@ -105,6 +175,21 @@ def read_hdf5_more_files_unresolved(path):
     y = position[:,1]
     z = position[:,2]
     Mvir = snap["/mass"][:]
+    
+    if wp_flag:
+        velocity = snap["/velocity"][:]
+        vz = velocity[:,2]
+
+        # apply RSD along the z-direction
+        Hz = 100.0*np.sqrt(Om0*(1.0+z_snap)**3 + Ol0)
+        Hzi = (1+z_snap)/Hz
+        z += vz * Hzi
+
+        # apply periodic boundary conditions
+        s = z < 0
+        z[s] += boxSize
+        s = z >= boxSize
+        z[s] -= boxSize
 
     # There won't be double the number of particles
     # in another file compared to the first one
@@ -116,7 +201,22 @@ def read_hdf5_more_files_unresolved(path):
         y_temp = position_temp[:,1]
         z_temp = position_temp[:,2]
         Mvir_temp = snap["/mass"][:]
+    
+        if wp_flag:
+            velocity_temp = snap["/velocity"][:]
+            vz_temp = velocity_temp[:,2]
 
+            ## change to redshift space
+            Hz = 100.0*np.sqrt(Om0*(1.0+z_snap)**3 + Ol0)
+            Hzi = (1+z_snap)/Hz
+            z_temp += vz_temp * Hzi
+
+            # apply periodic boundary conditions
+            s = z_temp < 0
+            z_temp[s] += boxSize
+            s = z_temp >= boxSize
+            z_temp[s] -= boxSize
+            
         x = np.append(x,x_temp)
         y = np.append(y,y_temp)
         z = np.append(z,z_temp)
@@ -253,6 +353,36 @@ def create_npairs_corrfunc(samples1,samples2,r_bin_edges,boxsize,num_threads):
     return(n_pairs)
 
 
+def create_npairs_corrfunc_wp(samples1,samples2,r_bin_edges,boxsize,num_threads,pi_max,d_pi=1):
+    """"
+    Takes two lists created from mass_mask(), radial bins, a boxsize,
+    and a number of threads to use. 
+
+    From this the number of pairs is counted between every combination
+    of mass bin and radial bin
+
+    This paircounting is achieved using corrfunc and can be multithreaded 
+    with num_threads
+
+    Returns a list which contains all the paircounts and is then reordered
+    into an array in a later function: npairs_conversion
+    """
+    n_pairs = []
+    # Iterate over the length of both mass filtered arrays
+    for i in range(len(samples1)):
+        for j in range(len(samples2)):
+            if len(samples1[i])>=1 and len(samples2[j])>=1:
+                n_pairs.append(DDrppi(autocorr=0, nthreads=num_threads, pimax=pi_max, npibins=(pi_max//d_pi), binfile=r_bin_edges,
+                         X1=samples1[i][:,0],Y1=samples1[i][:,1],Z1=samples1[i][:,2],X2=samples2[j][:,0],
+                         Y2=samples2[j][:,1],Z2 = samples2[j][:,2],periodic=True,verbose=False, boxsize=boxsize))
+                # We only use Corrfunc if both mass bins are populated, otherwise
+                # return 0 for this combination
+            else:
+                n_pairs.append(0)
+            print(i,j)
+    return(n_pairs)
+
+
 def npairs_conversion(samples1,samples2,n_pairs,r_bin_edges):
     """
     A simple function to convert the flat list of paircounts from
@@ -272,6 +402,29 @@ def npairs_conversion(samples1,samples2,n_pairs,r_bin_edges):
                 else:
                     n_pairs_mass_r_bins[i,j,k] = 0
     return n_pairs_mass_r_bins
+
+
+def npairs_conversion_wp(samples1,samples2,n_pairs,r_bin_edges,pi_max, d_pi=1):
+    """
+    A simple function to convert the flat list of paircounts from
+    create_npairs_corrfunc into a 3D array representing the pairs
+    counted in the separate mass and radial bins
+
+    The object returned is an array which contains the paircounts
+    for the ith mass bin 1, jth mass bin 2 and, kth r bin
+    where we take the [i,j,k] element of the output array
+    """
+    n_pairs_mass_r_bins_wp = np.zeros((len(samples1),len(samples2),len(r_bin_edges)-1,(pi_max//d_pi)))
+    for i in range(len(samples1)):
+        for j in range(len(samples2)):
+            for k in range(len(r_bin_edges)-1):
+                for l in range((pi_max//d_pi)):
+                    if len(samples1[i])>=1 and len(samples2[j])>=1:
+                        n_pairs_mass_r_bins_wp[i,j,k,l] = n_pairs[len(samples1)*i + j][k*(pi_max//d_pi) + l][4]
+                    else:
+                        n_pairs_mass_r_bins_wp[i,j,k,l] = 0
+    return n_pairs_mass_r_bins_wp
+
 
 def npairs_satsat_onehalo(x,y,z,Ms,num_sat_parts,mass_bin_edges,r_bin_edges):
     """
@@ -321,6 +474,68 @@ def npairs_satsat_onehalo(x,y,z,Ms,num_sat_parts,mass_bin_edges,r_bin_edges):
     for i in range(len(mass_bin_edges)-1):
         for j in range(len(r_bin_edges)-1):
             n_pairs_mass_r_bins[i,i,j] = final_data[i,j]
+
+
+    return n_pairs_mass_r_bins
+
+
+def npairs_satsat_onehalo_wp(x,y,z,Ms,num_sat_parts,mass_bin_edges,r_bin_edges,pi_max, d_pi=1):
+    """
+    We cannot use corrfunc for the one halo satellite-satellite term.
+    This is because it would be too inefficient to split by
+    halo id and use corrfunc on every single halo.
+
+    We can use the fact that the satellite data here is always
+    ordered according to halo id 
+
+    We know the number of satellite tracer particles so can use 
+    this to count the one halo pairs
+    """
+    # Create empty arrays to hold data
+    # For N sat particles we will have num_sat_parts*(num_sat_parts-1)/2 pairs per halo
+    Ms_reduced = np.zeros((len(Ms[::num_sat_parts]),
+                           int(num_sat_parts*(num_sat_parts-1)/2)))
+
+    # distances in LOS and projected directions are binned
+    distances_rp = np.zeros((len(Ms[::num_sat_parts]),
+                          int(num_sat_parts*(num_sat_parts-1)/2)))
+
+    distances_pi = np.zeros((len(Ms[::num_sat_parts]),
+                          int(num_sat_parts*(num_sat_parts-1)/2)))
+
+    k = 0
+    # For any number of satellite particles can take every combination of ith and 
+    # jth satellite particle and find the distance and put them all in a big array
+    for i in range(num_sat_parts):
+        for j in range(i):
+            print(k)
+            Ms_reduced[:,k] = Ms[::num_sat_parts]
+            distances_rp[:,k] = ((x[i::num_sat_parts]-x[j::num_sat_parts])**2
+                            + (y[i::num_sat_parts]-y[j::num_sat_parts])**2)**0.5
+
+            distances_pi[:,k] = ((z[i::num_sat_parts]-z[j::num_sat_parts])**2)**0.5
+
+            # This works as all halos have the same number of sat particles so 
+            # [::num_sat_parts] is actually looping the specific paircount 
+            # (particles i and j) over every halo
+            k += 1
+            print(i,j)
+
+    # Reshape the masses and distances of the pairs so they can
+    # be binned
+    Ms_reduced = np.reshape(Ms_reduced,(1,-1))[0]
+    distances_rp = np.reshape(distances_rp,(1,-1))[0]
+    distances_pi = np.reshape(distances_pi,(1,-1))[0]
+
+    final_data = np.histogramdd(sample = np.array([Ms_reduced,distances_rp,distances_pi]).T,bins=[mass_bin_edges,r_bin_edges,np.arange(0, pi_max+1, d_pi)])
+    final_data = final_data[0]
+    # Finally transform into the usual format with 2 separate M bins so that it easily fits into the rest of my existing code
+
+    n_pairs_mass_r_bins = np.zeros((len(mass_bin_edges)-1,len(mass_bin_edges)-1,len(r_bin_edges)-1,(pi_max//d_pi)))
+    for i in range(len(mass_bin_edges)-1):
+        for j in range(len(r_bin_edges)-1):
+            for k in range(pi_max//d_pi):
+                n_pairs_mass_r_bins[i,i,j,k] = final_data[i,j,k]
 
 
     return n_pairs_mass_r_bins

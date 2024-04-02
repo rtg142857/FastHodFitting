@@ -18,10 +18,18 @@ num_sat_parts = config.num_sat_parts
 run_label = config.run_label
 subsample_array = config.subsample_array
 
+wp_flag = config.wp_flag
+pi_max = config.pi_max
+d_pi = config.d_pi
+
+z_snap = config.z_snap
+Om0 = config.Om0
+Ol0 = config.Ol0
+
 # In this case we have an hdf5 file so read in using h5py
 
 
-x, y, z, Mvir, is_central, halo_id = fasthod.read_hdf5_more_files(path)
+x, y, z, Mvir, is_central, halo_id = fasthod.read_hdf5_more_files(path, wp_flag, Om0=Om0, Ol0=Ol0, boxSize=boxsize, z_snap=z_snap)
 
 x, y, z, Mvir, x_sat, y_sat, z_sat, Mvir_sat = fasthod.split_cen_sat(x,y,z,Mvir,is_central,halo_id)
 
@@ -32,7 +40,7 @@ del Mvir_sat
 del halo_id
 del is_central
 
-x_t, y_t, z_t, Mvir_t = fasthod.read_hdf5_more_files_unresolved(path)
+x_t, y_t, z_t, Mvir_t = fasthod.read_hdf5_more_files_unresolved(path, wp_flag, Om0=Om0, Ol0=Ol0, boxSize=boxsize, z_snap=z_snap)
 
 x = np.append(x,x_t)
 y = np.append(y,y_t)
@@ -53,8 +61,12 @@ samples_test = fasthod.subsample(samples_test,subsample_array)
 
 end_time_1 = time.time()
 print('starting pair counting')
-npairs_test = fasthod.create_npairs_corrfunc(samples_test,samples_test,r_bin_edges,boxsize,num_threads)
-npairs_mass_r_bins_test = fasthod.npairs_conversion(samples_test,samples_test,npairs_test,r_bin_edges)
+if not wp_flag:
+    npairs_test = fasthod.create_npairs_corrfunc(samples_test,samples_test,r_bin_edges,boxsize,num_threads)
+    npairs_mass_r_bins_test = fasthod.npairs_conversion(samples_test,samples_test,npairs_test,r_bin_edges)
+else:
+    npairs_test = fasthod.create_npairs_corrfunc_wp(samples_test,samples_test,r_bin_edges,boxsize,num_threads,pi_max,d_pi)
+    npairs_mass_r_bins_test = fasthod.npairs_conversion_wp(samples_test,samples_test,npairs_test,r_bin_edges,pi_max, d_pi)
 print('pair counting done')
 end_time_2 = time.time()
 np.save(run_label+"_cencen.npy",npairs_mass_r_bins_test)
