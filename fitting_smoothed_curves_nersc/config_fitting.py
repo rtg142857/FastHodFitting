@@ -12,15 +12,13 @@ import numpy as np
 path = config.path
 
 boxsize = config.boxsize
-
 r_bin_edges = config.r_bin_edges
-
 mass_bin_edges = config.mass_bin_edges
-
 num_sat_parts = config.num_sat_parts
-
 run_label = config.run_label
 
+#for wp
+wp_flag = True
 
 # Number of steps to take with each emcee walker
 num_steps = 2000
@@ -86,29 +84,28 @@ def Sat_HOD(params,cen_hod,mass_bins):
 
 def likelihood_calc(model,y,err):
     # Here take a constant fractional error and exclude BAO scale
-    #likelihood = - 0.5 * (np.sum((1 - (model[:75] / y[:75]))**2) / err**2)
-    # Alternatively use a less tight fit at very small scales, using observed effect of sample variance
-    # cutoff at large scales so systematic effects aren't overweighted
-    likelihood = - 0.5 * (np.sum((1 - (model[:75] / y[:75]))**2 / (2*np.maximum(0.01 * np.logspace(-2,2.2,85)[:75]**-0.5,0.03))**2))
+    # only fit to scales greater than 1e-1 Mpc/h
+    likelihood = - 0.5 * (np.sum((1 - (model[6:] / y[6:]))**2 / (err[6:]/y[6:])**2))
     return likelihood
     
 # Target correlation function to fit to
 # Rescale this by the cosmology factor here:
-cosmo_factor = np.genfromtxt("cosmology_rescaling_factor_xi_zel_8.txt")
-target_2pcf = np.genfromtxt("xi_r_mxxl.dat")
-for i in range(10):
-    target_2pcf[:,i] = target_2pcf[:,i] * cosmo_factor
+cosmo_factor = 1.0 #np.genfromtxt("cosmology_rescaling_factor_wp_zel_8.txt")
+
+target_2pcf = np.genfromtxt("bgs_target_files/wp_target_y1.txt")[:,1:] # ignore first column of separation bins
+
+for i in range(9):
+    target_2pcf[:,i] = target_2pcf[:,i] * cosmo_factor 
 
 # Target number density array
-target_num_den = np.genfromtxt("target_num_den_rescaled.txt")
-# target_num_den = np.genfromtxt("target_number_density.dat")
+target_num_den = np.genfromtxt("bgs_target_files/target_number_density_y1.txt")
 
 # error to apply to each point on the correlation function, can affect the speed of the fitting and walkers
 # can get stuck in local minima if this is set too small (<0.1) 
-err = 0.7 * 0.0625 * 1.5
+target_2pcf_err = np.genfromtxt("bgs_target_files/wp_target_err_y1.txt")[:,1:] # jackknife errors from data clustering
 
 # Number density error parameter, affects how tight the target number density constraint is
-num_den_err = 0.0625 * (0.01**0.5) * 1.5
+num_den_err = 0.03 # Assume a 3% error in number densities (still systematic differences between North and South)
 
 # Prior_locations, positions of the priors on the parameters for fitting
 

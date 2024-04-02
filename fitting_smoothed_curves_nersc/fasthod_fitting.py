@@ -12,9 +12,11 @@ import h5py
 import sys
 import time
 import emcee
-from multiprocessing import Pool
+#from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool as Pool
 import config
 import config_fitting
+import numba
 # Load parameters from config file
 path = config.path
 path_tracer = config.path_tracer
@@ -27,6 +29,9 @@ run_label = config.run_label
 subsample_array = config.subsample_array
 # Load parameters from fitting config file
 
+wp_flag = config_fitting.wp_flag
+pi_max = config.pi_max
+
 num_steps = config_fitting.num_steps
 num_walkers = config_fitting.num_walkers
 run_path = config_fitting.run_path
@@ -37,7 +42,8 @@ Sat_HOD = config_fitting.Sat_HOD
 likelihood_calc = config_fitting.likelihood_calc
 target_2pcf = config_fitting.target_2pcf
 target_num_den = config_fitting.target_num_den
-err = config_fitting.err
+#err = config_fitting.err
+err = config_fitting.target_2pcf_err
 num_den_err = config_fitting.num_den_err
 priors = config_fitting.priors
 initial_params_random = config_fitting.initial_params_random
@@ -160,7 +166,7 @@ def calc_hmf_more_files(path,num_mass_bins_big,mass_bin_edges):
 
     # There won't be double the number of particles
     # in another file compared to the first one
-    # So use this to create unique halo IDs
+    # So use this to create unique halo IDs    
     for i in range(1,34):
         snap = h5py.File(path+"galaxy_tracers_"+str(i)+".hdf5","r")
         Mvir_temp = snap["/mass"][:]
@@ -226,8 +232,6 @@ def calc_hmf_ascii(path, num_mass_bins_big,mass_bin_edges):
     return mass_bins_big, cen_halos_big, sat_halos_big
  
 
-
-  
 def create_weighting_factor(mass_pair_array,hod1,hod2):
     """
     Multiply the array by the relevant HODs and then sum over the mass bins
@@ -236,6 +240,8 @@ def create_weighting_factor(mass_pair_array,hod1,hod2):
     """
     weighting_factor = np.tensordot(np.outer(hod1,hod2),mass_pair_array,axes=([0,1],[0,1]))
     return weighting_factor
+
+
 
 def create_accurate_HOD(hod,halos,mass_bin_edges,num_mass_bins_big):
     """
@@ -254,6 +260,7 @@ def create_accurate_HOD(hod,halos,mass_bin_edges,num_mass_bins_big):
     return HOD_recalc
 
 
+
 def create_2pcf(hod_cen,hod_sat,cencen,censat,satsat,satsat_onehalo,num_sat_parts,
                 hod_cen_big,hod_sat_big,cen_halos_big,sat_halos_big,
                 boxsize):
@@ -270,6 +277,7 @@ def create_2pcf(hod_cen,hod_sat,cencen,censat,satsat,satsat_onehalo,num_sat_part
     weighting_factor_satsat = create_weighting_factor(satsat,hod_sat,hod_sat)
     weighting_factor_satsat_onehalo = create_weighting_factor(satsat_onehalo,hod_sat,hod_sat) / (
                                       (num_sat_parts*(num_sat_parts-1))/2)
+    
 
     weighting_factor_total = weighting_factor_cencen + weighting_factor_censat + (
                              weighting_factor_satsat + weighting_factor_satsat_onehalo)
@@ -282,6 +290,41 @@ def create_2pcf(hod_cen,hod_sat,cencen,censat,satsat,satsat_onehalo,num_sat_part
     cf = (weighting_factor_total / randoms) - 1
     return cf
 
+
+def create_wp(hod_cen,hod_sat,cencen,censat,satsat,satsat_onehalo,num_sat_parts,
+                hod_cen_big,hod_sat_big,cen_halos_big,sat_halos_big,
+                boxsize,pi_max,r_bin_edges):
+    """
+    Creates the wp from the hod and the paircounts.
+    First create the total number of paircounts.
+    Then create the analytic randoms based on the total galaxies expected
+    Then create the correlation function from these two components
+
+    """
+
+    weighting_factor_cencen = create_weighting_factor(cencen,hod_cen,hod_cen)
+    # Multiply censat factor by two as the others are double counted but this one isn't
+    weighting_factor_censat = create_weighting_factor(censat,hod_cen,hod_sat)*2
+    weighting_factor_satsat = create_weighting_factor(satsat,hod_sat,hod_sat)
+    weighting_factor_satsat_onehalo = create_weighting_factor(satsat_onehalo,hod_sat,hod_sat) / (
+                                      (num_sat_parts*(num_sat_parts-1))/2) 
+    
+    weighting_factor_total = weighting_factor_cencen + weighting_factor_censat + (
+                             weighting_factor_satsat + weighting_factor_satsat_onehalo)
+    
+    npart = np.sum(cen_halos_big * hod_cen_big)
+    npart_sat = np.sum(sat_halos_big * hod_sat_big / num_sat_parts)
+    npart_total = npart + npart_sat
+    
+    rands = create_randoms_for_wp(npart = (npart + npart_sat),r_bin_edges = r_bin_edges,pi_max = pi_max,boxsize=boxsize)
+    wp_rands = np.reshape(rands,newshape=(len(r_bin_edges)-1,pi_max))
+    
+    xis = (weighting_factor_total/ wp_rands) -1
+    
+    wp_total = xi_to_wps(xis,r_bin_edges,pi_max)
+    
+    
+    return wp_total
 
 
 def create_randoms_for_corrfunc(npart,r_bin_edges,boxsize):
@@ -301,6 +344,42 @@ def create_randoms_for_corrfunc(npart,r_bin_edges,boxsize):
     rhor = (NR*(NR-1))/global_volume
     RR = (dv*rhor)
     return RR
+
+
+def create_randoms_for_wp(npart,r_bin_edges,pi_max,boxsize):
+    """
+    Calculate the analytic randoms for npart particles in a box with
+    side length boxsize.  This code is based on the calculation done 
+    either in corrfunc but the formula is pretty simple.
+    """
+    NR = npart
+    pis = np.arange(1,pi_max+1)
+    RR_out = np.zeros((len(r_bin_edges)-1)*pi_max)
+    for p in range(pi_max):
+        # do volume calculations
+        v = 2*np.pi*r_bin_edges**2 # Volume of cylinders
+
+        dv = np.diff(v)  # difference between r volumes
+        
+        global_volume = boxsize**3  # volume of simulation
+
+        # calculate the random-random pairs using density * volume
+        rhor = (NR*(NR-1))/global_volume
+        RR = (dv*rhor)
+        #print(RR)
+        RR_out[p::pi_max] = RR
+    return RR_out
+
+
+def xi_to_wps(xis,r_bin_edges,pi_max):
+    """
+    Integrate over pi bins to get wp from xi
+    """
+    dpi = 1
+    
+    wp_out = 2.0 * dpi * np.sum(xis, axis=1)
+    return(wp_out)
+
 
 def calc_number_density(hod_cen_big,hod_sat_big,
                         cen_halos_big,boxsize):
@@ -335,36 +414,43 @@ def create_hod_params(params):
     #print("Mmin",Mmin[0],"slm",slm[0],"M0",M0[0],"M1",M1[0],"alpha",alpha[0])
     return HOD_params
 
-def log_likelihood_calc(params, target, target_density,target_number):
+def log_likelihood_calc(params, target, target_density, target_number, wp_flag):
     """
     Calculates the contribution to the likelihood from an individual
     sample at one magnitude limit. The total likelihood function
     adds up the total contribution from all samples
     """
+
     hod_cen_big = Cen_HOD(params,mass_bin_centres_big)
     hod_sat_big = Sat_HOD(params,hod_cen_big,mass_bin_centres_big)
     
-    
     hod_cen = create_accurate_HOD(hod_cen_big,cen_halos_big,mass_bin_edges,num_mass_bins_big)
     hod_sat = create_accurate_HOD(hod_sat_big,sat_halos_big,mass_bin_edges,num_mass_bins_big)
-    cf = create_2pcf(hod_cen,hod_sat,cencen,censat,satsat,satsat_onehalo,num_sat_parts,
+    
+    if wp_flag:
+        wp = create_wp(hod_cen,hod_sat,cencen,censat,satsat,satsat_onehalo,num_sat_parts,
+                    hod_cen_big,hod_sat_big,cen_halos_big,sat_halos_big,
+                    boxsize,pi_max,r_bin_edges)
+    else:
+        cf = create_2pcf(hod_cen,hod_sat,cencen,censat,satsat,satsat_onehalo,num_sat_parts,
                 hod_cen_big,hod_sat_big,cen_halos_big,sat_halos_big,
                 boxsize)
 
     number_density = calc_number_density(hod_cen_big,hod_sat_big,
                         cen_halos_big,boxsize)
 
-    # Likelihood from fitting cf
     if target_number <=8:
-        likelihood = likelihood_calc(cf,target[:,target_number+1],err)
+        if wp_flag:
+            likelihood = likelihood_calc(wp,target[:,target_number],err[:,target_number])
+        else:
+            likelihood = likelihood_calc(cf,target[:,target_number],err[:,target_number])
     else:
         likelihood = 0
-
-    # Likelihood from number density fit
+        
     likelihood_num_den =  - (1 - (number_density / target_density))**2 / (num_den_err**2)
-
-    # Add them both together to get the total likelihood
+    
     l_likelihood = likelihood + likelihood_num_den
+    
     return l_likelihood, hod_cen+hod_sat
 
 
@@ -376,11 +462,16 @@ def log_likelihood(params, target, target_density):
     """
     hod_params = create_hod_params(params)
     like_total = 0
-    num_den_old = np.zeros(len(mass_bin_edges)-1)
+    num_den_old = np.zeros(len(mass_bin_edges)-1) # this is just the HOD in mass bins
     for i in range(len(hod_params[:,0])):
-        like_calc, num_den_current = log_likelihood_calc(hod_params[i,:],target,target_density[i],i)
+        like_calc, num_den_current = log_likelihood_calc(hod_params[i,:],target,target_density[i],i, wp_flag=wp_flag)
         like_total += like_calc
-        if np.sum((num_den_current < num_den_old))>=1:
+        
+        # this is counting number of bins with crossing. If any, add penalty 
+        # only count this as crossing if the occupation number is above some threshold
+        threshold = 1e-2
+        in_threshold = num_den_old > threshold
+        if np.sum((num_den_current[in_threshold] < num_den_old[in_threshold]))>=1:
             #print(np.sum((num_den_current < num_den_old)))
             #print(num_den_current - num_den_old)
             like_total += -400 # add a cost per overlap
@@ -452,8 +543,9 @@ def perform_fitting(target_number):
     print("Target Density: ",10**target_num_den[target_number,1])
     nwalkers, ndim = walker_init_pos.shape
     start_time = time.time()
-    #with Pool() as pool:
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, args=(target, target_density))
+    
+    #with Pool(8) as pool:
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, args=(target, target_density))#, pool=pool)
     sampler.run_mcmc(walker_init_pos, num_steps);
     end_time = time.time()
     print("fitting took ", end_time - start_time, " seconds")
@@ -503,8 +595,8 @@ def plot_CFs_errors(CFs):
     for i in range(len(CFs[0,:])):
         r_bin_centres = 10**(np.log10(r_bin_edges[:-1]) + np.diff(np.log10(r_bin_edges))/2 )
         plt.plot(r_bin_centres,CFs[:,i],c="C"+str(i))#,linestyle="--",alpha=0.6)
-    plt.hlines(xmin = r_bin_centres[0],xmax =r_bin_centres[74],y=1+ 3 * 0.7 * 0.0625 * 1.5,colors="k")
-    plt.hlines(xmin = r_bin_centres[0],xmax =r_bin_centres[74],y=1- 3 * 0.7 * 0.0625 * 1.5,colors="k")
+    #plt.hlines(xmin = r_bin_centres[0],xmax =r_bin_centres[74],y=1+ 3 * 0.7 * 0.0625 * 1.5,colors="k")
+    #plt.hlines(xmin = r_bin_centres[0],xmax =r_bin_centres[74],y=1- 3 * 0.7 * 0.0625 * 1.5,colors="k")
     plt.xscale("log")
     plt.xlabel("r [Mpc/h]")
     plt.ylabel(r"$\xi$(r) ratio")
@@ -571,7 +663,7 @@ def max_like_params(sampler):
 
     # Find the maximum likelihood parameter position
 
-    print(np.shape(likelihoods))
+    #print(np.shape(likelihoods))
     best_param_index1 = np.argmax(likelihoods,axis = 0)
     best_param_index2 = np.argmax(samplers[0].get_log_prob()[best_param_index1,np.arange(num_walkers)])
     best_params = flat_samples[best_param_index1[best_param_index2],best_param_index2,:]
@@ -621,6 +713,10 @@ if __name__ == "__main__":
     censat = undo_subsampling(censat,subsample_array)
     satsat = undo_subsampling(satsat,subsample_array)
     # Set the random seed
+    
+    # make cencen and satsat symmetrical
+    ###cencen = (cencen + np.swapaxes(cencen,0,1))/2.
+    ###satsat = (satsat + np.swapaxes(satsat,0,1))/2.
 
     np.random.seed(random_seed)
     
@@ -660,7 +756,6 @@ if __name__ == "__main__":
     best_params = np.zeros((1,len(initial_params)))
     for i in range(1):
         best_params[i,:] = max_like_params(samplers[i])
-        print(best_params[i,:])
     
     best_log_prob = max_like_log_prob(samplers[i])
     
@@ -682,11 +777,21 @@ if __name__ == "__main__":
 
         hod_cen = create_accurate_HOD(hod_cen_big,cen_halos_big,mass_bin_edges,num_mass_bins_big)
         hod_sat = create_accurate_HOD(hod_sat_big,sat_halos_big,mass_bin_edges,num_mass_bins_big)
-        cf = create_2pcf(hod_cen,hod_sat,cencen,censat,satsat,satsat_onehalo,num_sat_parts,
+        
+        
+        if wp_flag:
+            
+            cf = create_wp(hod_cen,hod_sat,cencen,censat,satsat,satsat_onehalo,num_sat_parts,
+                hod_cen_big,hod_sat_big,cen_halos_big,sat_halos_big,
+                boxsize,pi_max,r_bin_edges)
+        else:
+            cf = create_2pcf(hod_cen,hod_sat,cencen,censat,satsat,satsat_onehalo,num_sat_parts,
                 hod_cen_big,hod_sat_big,cen_halos_big,sat_halos_big,
                 boxsize)
+            
         HODs[:,i] = hod_cen + hod_sat
-        CF_ratio[:,i] = cf / target_2pcf[:,i+1]
+        #CF_ratio[:,i] = cf / target_2pcf[:,i+1]
+        CF_ratio[:,i] = cf / target_2pcf[:,i]
         CFs[:,i] = cf
         #print(CF_ratio)
 
