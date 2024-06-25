@@ -1,4 +1,12 @@
 import numpy as np
+import yaml
+
+path_config_filename = sys.argv[1] # Config file path
+
+with open(path_config_filename, "r") as file:
+    path_config = yaml.safe_load(file)
+
+
 
 path = "../"
 path_tracer = "../"
@@ -8,11 +16,19 @@ boxsize = 2000
 wp_flag = True # If True calculate wp(rp), otherwise xi(r)
 pi_max = 80 # pi max when calculating wp(rp), in Mpc/h
 d_pi = 1    # width of pi bins (must divide pi_max)
-z_snap = 0.2 # snapshot redshift
+z_snap = path_config["Params"]["redshift"] # snapshot redshift
+
+
 
 # cosmology
-Om0 = 0.3151918
-Ol0 = 0.6848082
+flamingo_param_file_path = path_config["Paths"]["params_path"]
+with open(flamingo_param_file_path, "r") as file:
+    flamingo_params = yaml.safe_load(file)
+
+Om0 = flamingo_params["Cosmology"]["Omega_cdm"]
+Ol0 = flamingo_params["Cosmology"]["Omega_lambda"]
+#Om0 = 0.3151918
+#Ol0 = 0.6848082
 
 r_bin_edges = np.logspace(-2,2,25) # either rp or r, depending if we are calculating wp(rp) or xi(r)
 
