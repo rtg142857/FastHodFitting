@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 import h5py
+import yaml
 import sys
 import time
 import Corrfunc
@@ -11,21 +12,33 @@ import fasthod
 import config
 print("reading in data")
 
-# Load data from config file
+# Load parameters from FastHodFitting config file
 path = config.path
-boxsize = config.boxsize
 r_bin_edges = config.r_bin_edges
 mass_bin_edges = config.mass_bin_edges
-num_sat_parts = int(config.num_sat_parts)
+num_sat_parts = config.num_sat_parts
 run_label = config.run_label
+subsample_array = config.subsample_array
 
 wp_flag = config.wp_flag
 pi_max = config.pi_max
 d_pi = config.d_pi
 
-z_snap = config.z_snap
-Om0 = config.Om0
-Ol0 = config.Ol0
+# Load parameters from HOD_Mock_Pipeline config file
+
+path_config_filename = sys.argv[1]
+with open(path_config_filename, "r") as file:
+    path_config = yaml.safe_load(file)
+
+z_snap = path_config["Params"]["redshift"]
+boxsize = path_config["Params"]["L"]
+
+flamingo_param_file_path = path_config["Paths"]["params_path"]
+with open(flamingo_param_file_path, "r") as file:
+    flamingo_params = yaml.safe_load(file)
+
+Om0 = flamingo_params["Cosmology"]["Omega_cdm"]
+Ol0 = flamingo_params["Cosmology"]["Omega_lambda"]
 
 # In this case we have an hdf5 file so read in using h5py
 

@@ -12,7 +12,6 @@ print("reading in data")
 
 # Load parameters from FastHodFitting config file
 path = config.path
-boxsize = config.boxsize
 r_bin_edges = config.r_bin_edges
 mass_bin_edges = config.mass_bin_edges
 num_sat_parts = config.num_sat_parts
@@ -30,6 +29,7 @@ with open(path_config_filename, "r") as file:
     path_config = yaml.safe_load(file)
 
 z_snap = path_config["Params"]["redshift"]
+boxsize = path_config["Params"]["L"]
 
 flamingo_param_file_path = path_config["Paths"]["params_path"]
 with open(flamingo_param_file_path, "r") as file:
