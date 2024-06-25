@@ -7,9 +7,10 @@ import Corrfunc
 from Corrfunc.theory.DD import DD
 import fasthod
 import config
+import yaml
 print("reading in data")
 
-# Load parameters from config file
+# Load parameters from FastHodFitting config file
 path = config.path
 boxsize = config.boxsize
 r_bin_edges = config.r_bin_edges
@@ -22,9 +23,20 @@ wp_flag = config.wp_flag
 pi_max = config.pi_max
 d_pi = config.d_pi
 
-z_snap = config.z_snap
-Om0 = config.Om0
-Ol0 = config.Ol0
+# Load parameters from HOD_Mock_Pipeline config file
+
+path_config_filename = sys.argv[1]
+with open(path_config_filename, "r") as file:
+    path_config = yaml.safe_load(file)
+
+z_snap = path_config["Params"]["redshift"]
+
+flamingo_param_file_path = path_config["Paths"]["params_path"]
+with open(flamingo_param_file_path, "r") as file:
+    flamingo_params = yaml.safe_load(file)
+
+Om0 = flamingo_params["Cosmology"]["Omega_cdm"]
+Ol0 = flamingo_params["Cosmology"]["Omega_lambda"]
 
 # In this case we have an hdf5 file so read in using h5py
 
