@@ -1,7 +1,7 @@
 import numpy as np
 
-path = "../"
-path_tracer = "../"
+path = "../../tracer_output/"
+path_tracer = "../../tracer_output/"
 #boxsize = 2000 # read in directly through python scripts
 
 # for wp(rp) only
