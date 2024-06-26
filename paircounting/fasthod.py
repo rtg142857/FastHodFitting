@@ -123,7 +123,7 @@ def read_hdf5_more_files(path, wp_flag=False, Om0=None, Ol0=None, boxSize=None, 
         z[s] -= boxSize
     
     ### FOR FLAMINGO, ONLY USE ONE FILE FOR NOW
-    if os.path.exists(path+"galaxy_tracers_1.hdf5", "r"):
+    if os.path.exists(path+"galaxy_tracers_1.hdf5"):
         raise Exception("Multiple output files aren't yet supported, fix this")
 
     # # There won't be double the number of particles
