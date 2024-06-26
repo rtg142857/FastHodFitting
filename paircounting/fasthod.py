@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import h5py
 import sys
+import os
 import time
 import Corrfunc
 from Corrfunc.theory.DD import DD
@@ -121,43 +122,46 @@ def read_hdf5_more_files(path, wp_flag=False, Om0=None, Ol0=None, boxSize=None, 
         s = z >= boxSize
         z[s] -= boxSize
     
-    
-    # There won't be double the number of particles
-    # in another file compared to the first one
-    # So use this to create unique halo IDs
-    id_unique = 2 * len(halo_id)
-    for i in range(1,34):
-        snap = h5py.File(path+"galaxy_tracers_"+str(i)+".hdf5","r")
-        position_temp = snap["/position"]
-        x_temp = position_temp[:,0]
-        y_temp = position_temp[:,1]
-        z_temp = position_temp[:,2]
-        Mvir_temp = snap["/mass"][:]
-        is_central_temp = snap["/is_central"][:]
-        halo_id_temp = snap["/halo_id"][:] + (i * id_unique)
-        
-        if wp_flag:
-            velocity_temp = snap["/velocity"][:]
-            vz_temp = velocity_temp[:,2]
+    ### FOR FLAMINGO, ONLY USE ONE FILE FOR NOW
+    if os.path.exists(path+"galaxy_tracers_1.hdf5", "r"):
+        raise Exception("Multiple output files aren't yet supported, fix this")
 
-            # apply RSD along the z-direction
-            Hz = 100.0*np.sqrt(Om0*(1.0+z_snap)**3 + Ol0)
-            Hzi = (1+z_snap)/Hz
-            z_temp += vz_temp * Hzi
-
-            # apply periodic boundary conditions
-            s = z_temp < 0
-            z_temp[s] += boxSize
-            s = z_temp >= boxSize
-            z_temp[s] -= boxSize
+    # # There won't be double the number of particles
+    # # in another file compared to the first one
+    # # So use this to create unique halo IDs
+    # id_unique = 2 * len(halo_id)
+    # for i in range(1,34):
+    #     snap = h5py.File(path+"galaxy_tracers_"+str(i)+".hdf5","r")
+    #     position_temp = snap["/position"]
+    #     x_temp = position_temp[:,0]
+    #     y_temp = position_temp[:,1]
+    #     z_temp = position_temp[:,2]
+    #     Mvir_temp = snap["/mass"][:]
+    #     is_central_temp = snap["/is_central"][:]
+    #     halo_id_temp = snap["/halo_id"][:] + (i * id_unique)
         
-        x = np.append(x,x_temp)
-        y = np.append(y,y_temp)
-        z = np.append(z,z_temp)
-        Mvir = np.append(Mvir,Mvir_temp)
-        is_central = np.append(is_central,is_central_temp)
-        halo_id = np.append(halo_id,halo_id_temp)
-        print("Reading File Number "+str(i))
+    #     if wp_flag:
+    #         velocity_temp = snap["/velocity"][:]
+    #         vz_temp = velocity_temp[:,2]
+
+    #         # apply RSD along the z-direction
+    #         Hz = 100.0*np.sqrt(Om0*(1.0+z_snap)**3 + Ol0)
+    #         Hzi = (1+z_snap)/Hz
+    #         z_temp += vz_temp * Hzi
+
+    #         # apply periodic boundary conditions
+    #         s = z_temp < 0
+    #         z_temp[s] += boxSize
+    #         s = z_temp >= boxSize
+    #         z_temp[s] -= boxSize
+        
+    #     x = np.append(x,x_temp)
+    #     y = np.append(y,y_temp)
+    #     z = np.append(z,z_temp)
+    #     Mvir = np.append(Mvir,Mvir_temp)
+    #     is_central = np.append(is_central,is_central_temp)
+    #     halo_id = np.append(halo_id,halo_id_temp)
+    #     print("Reading File Number "+str(i))
     return x, y, z, Mvir, is_central, halo_id
 
 

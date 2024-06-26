@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 import h5py
+import yaml
 import sys
 import time
 import Corrfunc
