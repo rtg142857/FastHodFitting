@@ -1,5 +1,7 @@
 #!/bin/bash -l
 
+# Command line argument is path to path_config.yml
+
 #!/bin/bash
 #SBATCH -q regular
 #SBATCH -o logs/fitting
@@ -20,4 +22,4 @@ module load gsl
 #module unload craype-hugepages2M
 module load python/3.10.12
 
-python fasthod_fitting.py 1
+python fasthod_fitting.py $1
