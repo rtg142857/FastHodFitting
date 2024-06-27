@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import h5py
+import yaml
 import sys
 import time
 import emcee
@@ -21,7 +22,13 @@ import numba
 path = config.path
 path_tracer = config.path_tracer
 
-boxsize = config.boxsize
+path_config_filename = sys.argv[1]
+with open(path_config_filename, "r") as file:
+    path_config = yaml.safe_load(file)
+
+boxsize = path_config["Params"]["L"]
+
+#boxsize = config.boxsize
 r_bin_edges = config.r_bin_edges
 mass_bin_edges = config.mass_bin_edges
 num_sat_parts = config.num_sat_parts
@@ -58,7 +65,7 @@ save_path = config_fitting.save_path
 meta_priors = config_fitting.meta_priors
 
 
-random_seed = int(sys.argv[1])
+random_seed = path_config["Misc"]["random_seed"]
 np.random.seed(random_seed)
 
 initial_params = initial_params * np.random.uniform(size = 17,low = 0.9, high = 1.1)

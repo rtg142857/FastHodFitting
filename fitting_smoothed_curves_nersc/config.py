@@ -2,7 +2,7 @@ import numpy as np
 
 path = "../"
 path_tracer = "../"
-boxsize = 2000
+#boxsize = 2000
 
 # for wp(rp) only 
 pi_max = 80 # pi max when calculating wp(rp), in Mpc/h

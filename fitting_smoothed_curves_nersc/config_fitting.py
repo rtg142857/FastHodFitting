@@ -11,7 +11,7 @@ import config
 import numpy as np
 path = config.path
 
-boxsize = config.boxsize
+#boxsize = config.boxsize
 r_bin_edges = config.r_bin_edges
 mass_bin_edges = config.mass_bin_edges
 num_sat_parts = config.num_sat_parts
