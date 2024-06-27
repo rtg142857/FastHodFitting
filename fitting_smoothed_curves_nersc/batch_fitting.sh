@@ -9,6 +9,9 @@
 #SBATCH --time=12:00:00
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=1
+#SBATCH -p cosma8 #or some other partition, e.g. cosma, cosma8, etc.
+#SBATCH -A dp004
+#SBATCH --exclusive
 #SBATCH -C cpu
 #SBATCH --mail-user=tlrt88@durham.ac.uk 
 
