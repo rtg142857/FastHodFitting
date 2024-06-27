@@ -3,7 +3,7 @@
 # Command line argument is path to path_config.yml
 
 #!/bin/bash
-#SBATCH -q regular
+#SBATCH -J HOD_fitting
 #SBATCH -o logs/fitting
 #SBATCH -e logs/fitting_error
 #SBATCH --time=12:00:00
@@ -12,7 +12,6 @@
 #SBATCH -p cosma8 #or some other partition, e.g. cosma, cosma8, etc.
 #SBATCH -A dp004
 #SBATCH --exclusive
-#SBATCH -C cpu
 #SBATCH --mail-user=tlrt88@durham.ac.uk 
 
 module purge
