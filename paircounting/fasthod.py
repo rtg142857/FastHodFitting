@@ -195,37 +195,41 @@ def read_hdf5_more_files_unresolved(path, wp_flag=False, Om0=None, Ol0=None, box
         s = z >= boxSize
         z[s] -= boxSize
 
-    # There won't be double the number of particles
-    # in another file compared to the first one
-    # So use this to create unique halo IDs
-    for i in range(1,34):
-        snap = h5py.File(path+"galaxy_tracers_unresolved_"+str(i)+".hdf5","r")
-        position_temp = snap["/position"]
-        x_temp = position_temp[:,0]
-        y_temp = position_temp[:,1]
-        z_temp = position_temp[:,2]
-        Mvir_temp = snap["/mass"][:]
+    ### FOR FLAMINGO, ONLY USE ONE FILE FOR NOW
+    if os.path.exists(path+"galaxy_tracers_unresolved_1.hdf5"):
+        raise Exception("Multiple output files aren't yet supported, fix this")
+
+    # # There won't be double the number of particles
+    # # in another file compared to the first one
+    # # So use this to create unique halo IDs
+    # for i in range(1,34):
+    #     snap = h5py.File(path+"galaxy_tracers_unresolved_"+str(i)+".hdf5","r")
+    #     position_temp = snap["/position"]
+    #     x_temp = position_temp[:,0]
+    #     y_temp = position_temp[:,1]
+    #     z_temp = position_temp[:,2]
+    #     Mvir_temp = snap["/mass"][:]
     
-        if wp_flag:
-            velocity_temp = snap["/velocity"][:]
-            vz_temp = velocity_temp[:,2]
+    #     if wp_flag:
+    #         velocity_temp = snap["/velocity"][:]
+    #         vz_temp = velocity_temp[:,2]
 
-            ## change to redshift space
-            Hz = 100.0*np.sqrt(Om0*(1.0+z_snap)**3 + Ol0)
-            Hzi = (1+z_snap)/Hz
-            z_temp += vz_temp * Hzi
+    #         ## change to redshift space
+    #         Hz = 100.0*np.sqrt(Om0*(1.0+z_snap)**3 + Ol0)
+    #         Hzi = (1+z_snap)/Hz
+    #         z_temp += vz_temp * Hzi
 
-            # apply periodic boundary conditions
-            s = z_temp < 0
-            z_temp[s] += boxSize
-            s = z_temp >= boxSize
-            z_temp[s] -= boxSize
+    #         # apply periodic boundary conditions
+    #         s = z_temp < 0
+    #         z_temp[s] += boxSize
+    #         s = z_temp >= boxSize
+    #         z_temp[s] -= boxSize
             
-        x = np.append(x,x_temp)
-        y = np.append(y,y_temp)
-        z = np.append(z,z_temp)
-        Mvir = np.append(Mvir,Mvir_temp)
-        print("Reading Unresolved Halo File Number "+str(i))
+    #     x = np.append(x,x_temp)
+    #     y = np.append(y,y_temp)
+    #     z = np.append(z,z_temp)
+    #     Mvir = np.append(Mvir,Mvir_temp)
+    #     print("Reading Unresolved Halo File Number "+str(i))
     return x, y, z, Mvir
 
 
