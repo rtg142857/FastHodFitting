@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import h5py
 import yaml
 import sys
+import os
 import time
 import emcee
 #from multiprocessing import Pool
@@ -165,23 +166,27 @@ def calc_hmf(path,num_mass_bins_big,mass_bin_edges):
 def calc_hmf_more_files(path,num_mass_bins_big,mass_bin_edges):
     """
     Calculate the hmf from the catalog
-    New file format split into 34 separately
+    Reads in exactly one file; if it finds more than one, it throws an error
     """
     snap = h5py.File(path+"galaxy_tracers_0.hdf5","r")
     Mvir = snap["/mass"][:]
     is_central = snap["/is_central"][:]
 
-    # There won't be double the number of particles
-    # in another file compared to the first one
-    # So use this to create unique halo IDs    
-    for i in range(1,34):
-        snap = h5py.File(path+"galaxy_tracers_"+str(i)+".hdf5","r")
-        Mvir_temp = snap["/mass"][:]
-        is_central_temp = snap["/is_central"][:]
+    ### FOR FLAMINGO, ONLY USE ONE FILE FOR NOW
+    if os.path.exists(path+"galaxy_tracers_1.hdf5"):
+        raise Exception("Multiple output files aren't yet supported, fix this")
 
-        Mvir = np.append(Mvir,Mvir_temp)
-        is_central = np.append(is_central,is_central_temp)
-        print("Reading File Number "+str(i))
+    # # There won't be double the number of particles
+    # # in another file compared to the first one
+    # # So use this to create unique halo IDs    
+    # for i in range(1,34):
+    #     snap = h5py.File(path+"galaxy_tracers_"+str(i)+".hdf5","r")
+    #     Mvir_temp = snap["/mass"][:]
+    #     is_central_temp = snap["/is_central"][:]
+
+    #     Mvir = np.append(Mvir,Mvir_temp)
+    #     is_central = np.append(is_central,is_central_temp)
+    #     print("Reading File Number "+str(i))
 
 
     mass_centrals = Mvir[is_central]*1e10
@@ -190,15 +195,19 @@ def calc_hmf_more_files(path,num_mass_bins_big,mass_bin_edges):
     snap = h5py.File(path+"galaxy_tracers_unresolved_0.hdf5","r")
     Mvir = snap["/mass"][:]
 
-    # There won't be double the number of particles
-    # in another file compared to the first one
-    # So use this to create unique halo IDs
-    for i in range(1,34):
-        snap = h5py.File(path+"galaxy_tracers_unresolved_"+str(i)+".hdf5","r")
-        Mvir_temp = snap["/mass"][:]
+    ### FOR FLAMINGO, ONLY USE ONE FILE FOR NOW
+    if os.path.exists(path+"galaxy_tracers_unresolved_1.hdf5"):
+        raise Exception("Multiple output files aren't yet supported, fix this")
 
-        Mvir = np.append(Mvir,Mvir_temp)
-        print("Reading Unresolved Halo File Number "+str(i))
+    # # There won't be double the number of particles
+    # # in another file compared to the first one
+    # # So use this to create unique halo IDs
+    # for i in range(1,34):
+    #     snap = h5py.File(path+"galaxy_tracers_unresolved_"+str(i)+".hdf5","r")
+    #     Mvir_temp = snap["/mass"][:]
+
+    #     Mvir = np.append(Mvir,Mvir_temp)
+    #     print("Reading Unresolved Halo File Number "+str(i))
     mass_centrals = np.append(mass_centrals,Mvir*1e10)
 
     mass_min = mass_bin_edges[0]
