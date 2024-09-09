@@ -13,6 +13,7 @@
 #SBATCH -A dp004
 #SBATCH --exclusive
 #SBATCH --mail-user=tlrt88@durham.ac.uk 
+#SBATCH --mail-type=ALL
 
 module purge
 module use /cosma/home/dp004/dc-mene1/software/desi/cosmodesiconda/my-desiconda/modulefiles
