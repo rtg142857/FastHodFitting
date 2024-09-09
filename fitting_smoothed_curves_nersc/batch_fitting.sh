@@ -6,7 +6,7 @@
 #SBATCH -J HOD_fitting
 #SBATCH -o logs/fitting
 #SBATCH -e logs/fitting_error
-#SBATCH --time=1:00:00
+#SBATCH --time=12:00:00 # this one actually takes a long while
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=1
 #SBATCH -p cosma8 #or some other partition, e.g. cosma, cosma8, etc.
@@ -15,7 +15,7 @@
 #SBATCH --mail-user=tlrt88@durham.ac.uk 
 #SBATCH --mail-type=ALL
 
-module purge
+#module purge
 module use /cosma/home/dp004/dc-mene1/software/desi/cosmodesiconda/my-desiconda/modulefiles
 module load cosmodesiconda/my-desiconda
 #cosmodesienv main
