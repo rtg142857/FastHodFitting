@@ -24,7 +24,7 @@ mass_bin_edges = np.logspace(0,6,31) # Originally had 120 bins, but 30 good enou
 mass_bin_centres = 10**(np.log10(mass_bin_edges[:-1])+(np.diff(np.log10(mass_bin_edges))/2))
 num_sat_parts = 3
 
-run_label = "../../tracer_output/pairs"
+run_label = "pairs"
 
 def var_sample(a,b): # slope = a, complete sample mass = b
     subsampling = 10**(a*(10 + np.log10(mass_bin_centres) -  b))
