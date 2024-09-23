@@ -10,9 +10,7 @@ import Corrfunc
 from Corrfunc.theory.DD import DD
 import fasthod
 import config
-print("reading in data")
-import time
-time.sleep(1)
+print("reading in data for censat", flush=True)
 
 # Load parameters from FastHodFitting config file
 path = config.path

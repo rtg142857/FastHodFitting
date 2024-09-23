@@ -10,7 +10,7 @@ import Corrfunc
 from Corrfunc.theory.DD import DD
 import fasthod
 import config
-print("reading in data")
+print("reading in data for satsat", flush=True)
 
 # Load parameters from FastHodFitting config file
 path = config.path

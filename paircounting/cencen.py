@@ -8,7 +8,7 @@ from Corrfunc.theory.DD import DD
 import fasthod
 import config
 import yaml
-print("reading in data")
+print("reading in data for cencen", flush=True)
 
 # Load parameters from FastHodFitting config file
 path = config.path

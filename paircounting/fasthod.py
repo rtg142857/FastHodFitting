@@ -97,7 +97,7 @@ def read_hdf5_more_files(path, wp_flag=False, Om0=None, Ol0=None, boxSize=None, 
     need a new read routine to get them all in.
     Halo ID is not unique between files 
     """
-    
+    print("Reading in resolved tracers", flush=True)
     snap = h5py.File(path+"galaxy_tracers_0.hdf5","r")
     position = snap["/position"]
     x = position[:,0]
@@ -162,7 +162,7 @@ def read_hdf5_more_files(path, wp_flag=False, Om0=None, Ol0=None, boxSize=None, 
         Mvir = np.append(Mvir,Mvir_temp)
         is_central = np.append(is_central,is_central_temp)
         halo_id = np.append(halo_id,halo_id_temp)
-        print("Resolved tracers: Reading File Number "+str(i))
+        print("Resolved tracers: Reading File Number "+str(i), flush=True)
     return x, y, z, Mvir, is_central, halo_id
 
 
@@ -231,7 +231,7 @@ def read_hdf5_more_files_unresolved(path, wp_flag=False, Om0=None, Ol0=None, box
         y = np.append(y,y_temp)
         z = np.append(z,z_temp)
         Mvir = np.append(Mvir,Mvir_temp)
-        print("Reading Unresolved Halo File Number "+str(i))
+        print("Reading Unresolved Halo File Number "+str(i), flush=True)
     return x, y, z, Mvir
 
 
