@@ -166,27 +166,29 @@ def calc_hmf(path,num_mass_bins_big,mass_bin_edges):
 def calc_hmf_more_files(path,num_mass_bins_big,mass_bin_edges):
     """
     Calculate the hmf from the catalog
-    Reads in exactly one file; if it finds more than one, it throws an error
+    Reads in all files in the directory given in path
     """
     snap = h5py.File(path+"galaxy_tracers_0.hdf5","r")
     Mvir = snap["/mass"][:]
     is_central = snap["/is_central"][:]
-
-    ### FOR FLAMINGO, ONLY USE ONE FILE FOR NOW
-    if os.path.exists(path+"galaxy_tracers_1.hdf5"):
-        raise Exception("Multiple output files aren't yet supported, fix this")
+    
+    # Getting the list of remaining resolved/unresolved tracers
+    tracer_directory_list = os.listdir(path)
+    tracers_list = [file for file in tracer_directory_list if ".hdf5" in file]
+    resolved_tracers_list = [file for file in tracers_list if "unresolved" not in file]
+    unresolved_tracers_list = [file for file in tracers_list if "unresolved" in file]
 
     # # There won't be double the number of particles
     # # in another file compared to the first one
     # # So use this to create unique halo IDs    
-    # for i in range(1,34):
-    #     snap = h5py.File(path+"galaxy_tracers_"+str(i)+".hdf5","r")
-    #     Mvir_temp = snap["/mass"][:]
-    #     is_central_temp = snap["/is_central"][:]
+    for i in range(1,len(resolved_tracers_list)):
+        snap = h5py.File(path+"galaxy_tracers_"+str(i)+".hdf5","r")
+        Mvir_temp = snap["/mass"][:]
+        is_central_temp = snap["/is_central"][:]
 
-    #     Mvir = np.append(Mvir,Mvir_temp)
-    #     is_central = np.append(is_central,is_central_temp)
-    #     print("Reading File Number "+str(i))
+        Mvir = np.append(Mvir,Mvir_temp)
+        is_central = np.append(is_central,is_central_temp)
+        print("Reading resolved halo File Number "+str(i), flush=True)
 
 
     mass_centrals = Mvir[is_central]*1e10
@@ -195,19 +197,15 @@ def calc_hmf_more_files(path,num_mass_bins_big,mass_bin_edges):
     snap = h5py.File(path+"galaxy_tracers_unresolved_0.hdf5","r")
     Mvir = snap["/mass"][:]
 
-    ### FOR FLAMINGO, ONLY USE ONE FILE FOR NOW
-    if os.path.exists(path+"galaxy_tracers_unresolved_1.hdf5"):
-        raise Exception("Multiple output files aren't yet supported, fix this")
-
     # # There won't be double the number of particles
     # # in another file compared to the first one
     # # So use this to create unique halo IDs
-    # for i in range(1,34):
-    #     snap = h5py.File(path+"galaxy_tracers_unresolved_"+str(i)+".hdf5","r")
-    #     Mvir_temp = snap["/mass"][:]
+    for i in range(1,len(unresolved_tracers_list)):
+        snap = h5py.File(path+"galaxy_tracers_unresolved_"+str(i)+".hdf5","r")
+        Mvir_temp = snap["/mass"][:]
 
-    #     Mvir = np.append(Mvir,Mvir_temp)
-    #     print("Reading Unresolved Halo File Number "+str(i))
+        Mvir = np.append(Mvir,Mvir_temp)
+        print("Reading Unresolved Halo File Number "+str(i), flush=True)
     mass_centrals = np.append(mass_centrals,Mvir*1e10)
 
     mass_min = mass_bin_edges[0]
@@ -702,22 +700,25 @@ def max_like_log_prob(sampler):
 if __name__ == "__main__":
 
     # First get the number of halos and the hmf and the fine grained mass bins
+    if not os.path.isfile("mass_bins_big"):
+        print("No hmf files found, calculating", flush=True)
+        mass_bins_big, cen_halos_big, sat_halos_big = calc_hmf_more_files(path, num_mass_bins_big, mass_bin_edges)
 
-    mass_bins_big, cen_halos_big, sat_halos_big = calc_hmf_more_files(path, num_mass_bins_big, mass_bin_edges)
-
-    np.save("mass_bins_big.npy",mass_bins_big)
-    np.save("cen_halos_big.npy",cen_halos_big)
-    np.save("sat_halos_big.npy",sat_halos_big)
-    #mass_bins_big = np.load("mass_bins_big.npy")
-    #cen_halos_big = np.load("cen_halos_big.npy")
-    #sat_halos_big = np.load("sat_halos_big.npy")
+        np.save("mass_bins_big.npy",mass_bins_big)
+        np.save("cen_halos_big.npy",cen_halos_big)
+        np.save("sat_halos_big.npy",sat_halos_big)
+    else:
+        print("Reading hmf from files", flush=True)
+        mass_bins_big = np.load("mass_bins_big.npy")
+        cen_halos_big = np.load("cen_halos_big.npy")
+        sat_halos_big = np.load("sat_halos_big.npy")
 
     # Now get the finer grained mass bin centres for accuarate HOD estimation
 
     mass_bin_centres_big = mass_bins_big[:-1] + np.diff(mass_bins_big)/2
     
     # Now load in the mass - r binned paircounts:
-
+    print("Loading in paircounts", flush=True)
     cencen = np.load(run_path + "_cencen.npy")
     censat = np.load(run_path + "_censat.npy")
     satsat = np.load(run_path + "_satsat.npy")
@@ -736,7 +737,7 @@ if __name__ == "__main__":
 
     np.random.seed(random_seed)
     
-    print(create_hod_params(initial_params))
+    print(create_hod_params(initial_params), flush=True)
     print(priors)
     
     # Do the fitting for each magnitude limit:
