@@ -58,8 +58,6 @@ x_sat = x_sat_uncut[::num_sat_parts]
 y_sat = y_sat_uncut[::num_sat_parts]
 z_sat = z_sat_uncut[::num_sat_parts]
 Mvir_sat = Mvir_sat_uncut[::num_sat_parts]
-samples_sat = fasthod.mass_mask(x_sat,y_sat,z_sat,Mvir_sat,mass_bin_edges)
-samples_sat = fasthod.subsample(samples_sat,subsample_array)
 
 x_t, y_t, z_t, Mvir_t = fasthod.read_hdf5_more_files_unresolved(path, wp_flag, Om0=Om0, Ol0=Ol0, boxSize=boxsize, z_snap=z_snap)
 
