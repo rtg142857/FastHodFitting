@@ -4,8 +4,8 @@
 
 #!/bin/bash
 #SBATCH -J HOD_fitting
-#SBATCH -o logs/fitting
-#SBATCH -e logs/fitting_error
+#SBATCH -o logs/out_fitting
+#SBATCH -e logs/err_fitting
 #SBATCH --time=12:00:00 # this one actually takes a long while
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=1
