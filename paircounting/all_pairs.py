@@ -101,7 +101,7 @@ if not os.path.isfile(run_label+"_cencen.npy"):
     end_time_2 = time.time()
     np.save(run_label+"_cencen.npy",npairs_mass_r_bins_test)
 
-    print(run_label)
+    print("Saved with label "+run_label)
     print(path)
     print("total time to run code including paircounting: ",end_time_2 - start_time)
 else:
@@ -124,7 +124,7 @@ if not os.path.isfile(run_label+"_censat.npy"):
     end_time_2 = time.time()
     np.save(run_label+"_censat.npy",npairs_mass_r_bins_test)
 
-    print(run_label)
+    print("Saved with label "+run_label)
     print(path)
     print("total time to run code including paircounting: ",end_time_2 - start_time)
 else:
@@ -148,7 +148,7 @@ if not os.path.isfile(run_label+"_satsat.npy"):
     end_time_2 = time.time()
     np.save(run_label+"_satsat.npy",npairs_mass_r_bins_test)
 
-    print(run_label)
+    print("Saved with label "+run_label)
     print(path)
     print("total time to run code including paircounting: ",end_time_2 - start_time)
 else:
@@ -168,7 +168,7 @@ if not os.path.isfile(run_label+"_satsat_onehalo.npy"):
     end_time_2 = time.time()
     np.save(run_label+"_satsat_onehalo.npy",npairs_test)
 
-    print(run_label)
+    print("Saved with label "+run_label)
     print(path)
     print("total time to run code including paircounting: ",end_time_2 - start_time)
 else:
