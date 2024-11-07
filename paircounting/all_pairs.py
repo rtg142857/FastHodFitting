@@ -31,9 +31,12 @@ d_pi = config.d_pi
 path_config_filename = sys.argv[1]
 with open(path_config_filename, "r") as file:
     path_config = yaml.safe_load(file)
+with open(path_config["Paths"]["params_path"], "r") as file:
+    used_params = yaml.safe_load(file)
 
+h = used_params["Cosmology"]["h"]
 z_snap = path_config["Params"]["redshift"]
-boxsize = path_config["Params"]["L"]
+boxsize = path_config["Params"]["L"] * h
 
 flamingo_param_file_path = path_config["Paths"]["params_path"]
 with open(flamingo_param_file_path, "r") as file:

@@ -26,8 +26,11 @@ path_tracer = config.path_tracer
 path_config_filename = sys.argv[1]
 with open(path_config_filename, "r") as file:
     path_config = yaml.safe_load(file)
+with open(path_config["Paths"]["params_path"], "r") as file:
+    run_params = yaml.safe_load(file)
 
-boxsize = path_config["Params"]["L"]
+h = run_params["Cosmology"]["h"]
+boxsize = path_config["Params"]["L"] * h
 
 #boxsize = config.boxsize
 r_bin_edges = config.r_bin_edges
@@ -163,10 +166,11 @@ def calc_hmf(path,num_mass_bins_big,mass_bin_edges):
     
     return mass_bins_big, cen_halos_big, sat_halos_big
 
-def calc_hmf_more_files(path,num_mass_bins_big,mass_bin_edges):
+def calc_hmf_more_files(path,num_mass_bins_big,mass_bin_edges, h):
     """
     Calculate the hmf from the catalog
     Reads in all files in the directory given in path
+    Args: Path to the folder with galaxy tracers, number of mass bins, edges of the mass bins
     """
     snap = h5py.File(path+"galaxy_tracers_0.hdf5","r")
     Mvir = snap["/mass"][:]
