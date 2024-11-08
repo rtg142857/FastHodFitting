@@ -166,7 +166,7 @@ def calc_hmf(path,num_mass_bins_big,mass_bin_edges):
     
     return mass_bins_big, cen_halos_big, sat_halos_big
 
-def calc_hmf_more_files(path,num_mass_bins_big,mass_bin_edges, h):
+def calc_hmf_more_files(path,num_mass_bins_big,mass_bin_edges):
     """
     Calculate the hmf from the catalog
     Reads in all files in the directory given in path
