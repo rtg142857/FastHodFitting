@@ -18,7 +18,6 @@ print("reading in data", flush=True)
 path = config.path
 r_bin_edges = config.r_bin_edges
 mass_bin_edges = config.mass_bin_edges
-num_sat_parts = config.num_sat_parts
 run_label = config.run_label
 subsample_array = config.subsample_array
 
@@ -44,6 +43,8 @@ with open(flamingo_param_file_path, "r") as file:
 
 Om0 = flamingo_params["Cosmology"]["Omega_cdm"]
 Ol0 = flamingo_params["Cosmology"]["Omega_lambda"]
+
+num_sat_parts = path_config["Params"]["ntracer"]
 
 # Read in files using h5py
 x, y, z, Mvir, is_central, halo_id = fasthod.read_hdf5_more_files(path, wp_flag, Om0=Om0, Ol0=Ol0, boxSize=boxsize, z_snap=z_snap)

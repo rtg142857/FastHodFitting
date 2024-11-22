@@ -14,7 +14,6 @@ r_bin_edges = np.logspace(-2,2,25) # either rp or r, depending if we are calcula
 # This changes to Solar masses in the fitting so adjust the mass bins there accordingly
 mass_bin_edges = np.logspace(10,16,31) # Originally had 120 bins, but 30 good enough
 mass_bin_centres = 10**(np.log10(mass_bin_edges[:-1])+(np.diff(np.log10(mass_bin_edges))/2))
-num_sat_parts = 3
 
 run_label = "pairs"
 

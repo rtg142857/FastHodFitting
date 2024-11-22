@@ -32,10 +32,11 @@ with open(path_config["Paths"]["params_path"], "r") as file:
 h = run_params["Cosmology"]["h"]
 boxsize = path_config["Params"]["L"] * h
 
+num_sat_parts = path_config["Params"]["ntracer"]
+
 #boxsize = config.boxsize
 r_bin_edges = config.r_bin_edges
 mass_bin_edges = config.mass_bin_edges
-num_sat_parts = config.num_sat_parts
 run_label = config.run_label
 subsample_array = config.subsample_array
 # Load parameters from fitting config file
