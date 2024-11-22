@@ -14,7 +14,6 @@ path = config.path
 #boxsize = config.boxsize
 r_bin_edges = config.r_bin_edges
 mass_bin_edges = config.mass_bin_edges
-num_sat_parts = config.num_sat_parts
 run_label = config.run_label
 
 #for wp
