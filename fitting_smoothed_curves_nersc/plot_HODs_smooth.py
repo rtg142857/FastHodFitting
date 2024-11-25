@@ -1,10 +1,11 @@
 import numpy as np
 import config_fitting
-save_path = config_fitting.save_path
 target_num_den = config_fitting.target_num_den
 import matplotlib.pyplot as plt
 Cen_HOD = config_fitting.Cen_HOD
 Sat_HOD = config_fitting.Sat_HOD
+
+save_path = "diff_start_low_prior_1"
 
 mass_bin_edges = np.logspace(10,16,300) # Originally had 120 bins, but 30 good enough
 mass_bin_centres = 10**(np.log10(mass_bin_edges[:-1])+(np.diff(np.log10(mass_bin_edges))/2))
