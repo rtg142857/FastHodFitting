@@ -501,6 +501,8 @@ def npairs_satsat_onehalo_wp(x,y,z,Ms,num_sat_parts,mass_bin_edges,r_bin_edges,p
 
     We know the number of satellite tracer particles so can use 
     this to count the one halo pairs
+
+    TODO: Make more memory-efficient with many more num_sat_parts
     """
     # Create empty arrays to hold data
     # For N sat particles we will have num_sat_parts*(num_sat_parts-1)/2 pairs per halo

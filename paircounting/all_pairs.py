@@ -158,17 +158,20 @@ if not os.path.isfile(run_label+"_satsat.npy"):
 else:
     print("Satsat already done, skipping")
 
+del samples_sat
+del samples_test
+
 ################# Satsat_onehalo ################
 
 if not os.path.isfile(run_label+"_satsat_onehalo.npy"):
     print("============= Satsat_onehalo pair counting ============", flush=True)
     start_time = time.time()
-    print('starting pair counting')
+    print('starting pair counting', flush=True)
     if not wp_flag:
         npairs_test = fasthod.npairs_satsat_onehalo(x_sat_uncut,y_sat_uncut,z_sat_uncut,Mvir_sat_uncut,num_sat_parts,mass_bin_edges,r_bin_edges)
     else:
         npairs_test = fasthod.npairs_satsat_onehalo_wp(x_sat_uncut,y_sat_uncut,z_sat_uncut,Mvir_sat_uncut,num_sat_parts,mass_bin_edges,r_bin_edges,pi_max, d_pi)
-    print('pair counting done')
+    print('pair counting done', flush=True)
     end_time_2 = time.time()
     np.save(run_label+"_satsat_onehalo.npy",npairs_test)
 
