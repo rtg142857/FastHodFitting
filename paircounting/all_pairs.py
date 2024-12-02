@@ -180,7 +180,7 @@ if not os.path.isfile(run_label+"_satsat_onehalo.npy"):
     finish_points = [int((halo_num//splitting)*num_sat_parts*(i+1)) for i in range(splitting)]
     finish_points[-1] = tracer_num
 
-    npairs_test = np.zeros((len(mass_bin_edges)-1,len(mass_bin_edges)-1,len(r_bin_edges)-1))
+    npairs_test = np.zeros((len(mass_bin_edges)-1,len(mass_bin_edges)-1,len(r_bin_edges)-1,(pi_max//d_pi)))
     for i in range(splitting):
         print("Paircounting group "+str(i)+" out of "+str(splitting))
         if not wp_flag:
