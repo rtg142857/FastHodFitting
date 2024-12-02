@@ -46,6 +46,10 @@ Ol0 = flamingo_params["Cosmology"]["Omega_lambda"]
 
 num_sat_parts = path_config["Params"]["ntracer"]
 
+# Split the onehalo paircounting into this many parts, in order to avoid out-of-memory issues
+splitting = 100
+
+
 # Read in files using h5py
 x, y, z, Mvir, is_central, halo_id = fasthod.read_hdf5_more_files(path, wp_flag, Om0=Om0, Ol0=Ol0, boxSize=boxsize, z_snap=z_snap)
 
@@ -167,10 +171,23 @@ if not os.path.isfile(run_label+"_satsat_onehalo.npy"):
     print("============= Satsat_onehalo pair counting ============", flush=True)
     start_time = time.time()
     print('starting pair counting', flush=True)
-    if not wp_flag:
-        npairs_test = fasthod.npairs_satsat_onehalo(x_sat_uncut,y_sat_uncut,z_sat_uncut,Mvir_sat_uncut,num_sat_parts,mass_bin_edges,r_bin_edges)
-    else:
-        npairs_test = fasthod.npairs_satsat_onehalo_wp(x_sat_uncut,y_sat_uncut,z_sat_uncut,Mvir_sat_uncut,num_sat_parts,mass_bin_edges,r_bin_edges,pi_max, d_pi)
+
+    tracer_num = len(x_sat_uncut)
+    halo_num = tracer_num / num_sat_parts
+    print("Going over "+str(halo_num)+" halos, each with "+str(tracer_num)+" tracers, in "+str(splitting)+" chunks")
+
+    start_points = [(halo_num//splitting)*num_sat_parts*i for i in range(splitting)]
+    finish_points = [(halo_num//splitting)*num_sat_parts*(i+1) for i in range(splitting)]
+    finish_points[-1] = len(tracer_num)
+
+    npairs_test = np.zeros((len(mass_bin_edges)-1,len(mass_bin_edges)-1,len(r_bin_edges)-1))
+    for i in range(splitting):
+        print("Paircounting group "+str(i)+" out of "+str(splitting))
+        if not wp_flag:
+            npairs_test += 1#get it out of the way fasthod.npairs_satsat_onehalo(x_sat_uncut,y_sat_uncut,z_sat_uncut,Mvir_sat_uncut,num_sat_parts,mass_bin_edges,r_bin_edges)
+        else:
+            npairs_test += fasthod.npairs_satsat_onehalo_wp(x_sat_uncut[start_points[i]:finish_points[i]],y_sat_uncut[start_points[i]:finish_points[i]],z_sat_uncut[start_points[i]:finish_points[i]],Mvir_sat_uncut[start_points[i]:finish_points[i]],num_sat_parts,mass_bin_edges,r_bin_edges,pi_max, d_pi)
+
     print('pair counting done', flush=True)
     end_time_2 = time.time()
     np.save(run_label+"_satsat_onehalo.npy",npairs_test)
