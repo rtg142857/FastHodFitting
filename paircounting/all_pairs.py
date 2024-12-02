@@ -176,8 +176,8 @@ if not os.path.isfile(run_label+"_satsat_onehalo.npy"):
     halo_num = tracer_num / num_sat_parts
     print("Going over "+str(halo_num)+" halos, each with "+str(tracer_num)+" tracers, in "+str(splitting)+" chunks")
 
-    start_points = [(halo_num//splitting)*num_sat_parts*i for i in range(splitting)]
-    finish_points = [(halo_num//splitting)*num_sat_parts*(i+1) for i in range(splitting)]
+    start_points = [int((halo_num//splitting)*num_sat_parts*i) for i in range(splitting)]
+    finish_points = [int((halo_num//splitting)*num_sat_parts*(i+1)) for i in range(splitting)]
     finish_points[-1] = tracer_num
 
     npairs_test = np.zeros((len(mass_bin_edges)-1,len(mass_bin_edges)-1,len(r_bin_edges)-1))
