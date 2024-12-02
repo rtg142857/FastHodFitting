@@ -174,7 +174,7 @@ if not os.path.isfile(run_label+"_satsat_onehalo.npy"):
 
     tracer_num = len(x_sat_uncut)
     halo_num = tracer_num / num_sat_parts
-    print("Going over "+str(halo_num)+" halos, each with "+str(tracer_num)+" tracers, in "+str(splitting)+" chunks")
+    print("Going over "+str(halo_num)+" halos, for a total of "+str(tracer_num)+" tracers, in "+str(splitting)+" chunks")
 
     start_points = [int((halo_num//splitting)*num_sat_parts*i) for i in range(splitting)]
     finish_points = [int((halo_num//splitting)*num_sat_parts*(i+1)) for i in range(splitting)]
@@ -182,7 +182,7 @@ if not os.path.isfile(run_label+"_satsat_onehalo.npy"):
 
     npairs_test = np.zeros((len(mass_bin_edges)-1,len(mass_bin_edges)-1,len(r_bin_edges)-1,(pi_max//d_pi)))
     for i in range(splitting):
-        print("Paircounting group "+str(i)+" out of "+str(splitting))
+        print("Paircounting group "+str(i)+" out of "+str(splitting), flush=True)
         if not wp_flag:
             npairs_test += 1#get it out of the way fasthod.npairs_satsat_onehalo(x_sat_uncut,y_sat_uncut,z_sat_uncut,Mvir_sat_uncut,num_sat_parts,mass_bin_edges,r_bin_edges)
         else:
