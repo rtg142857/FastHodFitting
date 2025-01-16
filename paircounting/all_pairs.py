@@ -41,8 +41,10 @@ flamingo_param_file_path = path_config["Paths"]["params_path"]
 with open(flamingo_param_file_path, "r") as file:
     flamingo_params = yaml.safe_load(file)
 
-Om0 = flamingo_params["Cosmology"]["Omega_cdm"]
+
 Ol0 = flamingo_params["Cosmology"]["Omega_lambda"]
+Om0 = 1 - Ol0
+#Om0 = flamingo_params["Cosmology"]["Omega_cdm"] + flamingo_params["Cosmology"]["Omega_b"]
 
 num_sat_parts = path_config["Params"]["ntracer"]
 
