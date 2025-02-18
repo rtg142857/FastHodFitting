@@ -77,6 +77,7 @@ def Sat_HOD(params,cen_hod,mass_bins):
     M0 = 10**M0
     M1 = 10**M1
     result = cen_hod * (((mass_bins-M0)/M1)**alpha)
+    result = np.nan_to_num(result)
     return(result)
 
 # Likelihood definition can change a lot between fits as well 

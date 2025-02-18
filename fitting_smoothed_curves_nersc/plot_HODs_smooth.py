@@ -16,6 +16,8 @@ def plot_HODs(HODs):
     """
     plt.figure(figsize = (8,8))
     for i in range(len(HODs[0,:])):
+        print(str(target_num_den[i,0])+" y values: ")
+        print(HODs[:,i])
         plt.plot(mass_bin_edges[:-1] + np.diff(mass_bin_edges)/2,HODs[:,i],c="C"+str(i),label=target_num_den[i,0])
     plt.ylim(1e-3)
     plt.yscale("log")
